@@ -19,18 +19,13 @@ import com.elfmcys.ysm.proto.network.SwingHandRequestProto;
 import com.elfmcys.ysm.proto.network.UpdateStarredModelRequestProto;
 import com.elfmcys.ysm.util.ProtoBytes;
 import com.elfmcys.ysm.proto.mixel.manifest.info.SettingsProto;
-import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.effect.MobEffectUtil;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -44,12 +39,12 @@ public final class ControlHandler {
     private ControlHandler() {}
 
     public static void handleStarredModels(StarredModelsSnapshotProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         ClientControlHandler.handleStarredModels(message, contextSupplier);
     }
 
     public static void handleUpdateStar(UpdateStarredModelRequestProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         var sender = context.getSender();
         if (sender != null && message.modelHash().remaining() == Hash256.SIZE
@@ -68,7 +63,7 @@ public final class ControlHandler {
     }
 
     public static void handlePrivilegedTransient(PrivilegedTransientEventProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         ClientControlHandler.handlePrivilegedTransient(message, contextSupplier);
     }
 
@@ -91,7 +86,7 @@ public final class ControlHandler {
     }
 
     public static void handleSubmitConfigAction(SubmitConfigActionRequestProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         var sender = context.getSender();
         if (sender != null && validWireAction(message.action())) {
@@ -115,12 +110,12 @@ public final class ControlHandler {
     }
 
     public static void handleConfigAction(ConfigActionEventProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         ClientControlHandler.handleConfigAction(message, contextSupplier);
     }
 
     public static void handleEmitMolangSync(EmitMolangSyncProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         var sender = context.getSender();
         if (sender != null && ExpressionProtocol.validIdentity(message.identity())
@@ -139,11 +134,11 @@ public final class ControlHandler {
         context.setPacketHandled(true);
     }
 
-    public static void handleMolangSync(MolangSyncEventProto message, Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handleMolangSync(MolangSyncEventProto message, Supplier<PacketContext> contextSupplier) {
         ClientControlHandler.handleMolangSync(message, contextSupplier);
     }
 
-    public static void handleSwingHand(SwingHandRequestProto message, Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handleSwingHand(SwingHandRequestProto message, Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         var sender = context.getSender();
         if (sender != null && message.hand() != com.elfmcys.ysm.proto.network.Hand.UNSPECIFIED) {
@@ -153,7 +148,7 @@ public final class ControlHandler {
         context.setPacketHandled(true);
     }
 
-    private static void enqueueServer(NetworkEvent.Context context, ServerPlayer sender, Runnable action) {
+    private static void enqueueServer(PacketContext context, ServerPlayer sender, Runnable action) {
         var connection = context.getNetworkManager();
         var service = ServerModelService.current().orElse(null);
         var owner = service == null ? null : service.session(sender, connection).orElse(null);
@@ -293,7 +288,7 @@ public final class ControlHandler {
     }
 
     private static Entity resolveEntity(ServerPlayer sender, EntityRefProto reference) {
-        var entity = sender.serverLevel().getEntity(reference.entityId());
+        var entity = sender.level().getEntity(reference.entityId());
         if (entity == null)
             return null;
         if (!reference.hasPlayerId())
@@ -331,26 +326,17 @@ public final class ControlHandler {
     private record ServerTarget(ManagedContainer model, String targetId, SettingsProto settings) {
     }
 
+    /**
+     * Server-driven swing seen by other players, not the swinger.
+     * PORT(26.3-fabric): 26.3 LivingEntity.swing(hand, animation, sendToSwingingEntity=false) does what the
+     * upstream code did by hand: start only if no swing is running or it is past half its duration, then broadcast to
+     * tracking players excluding self. The haste/fatigue duration is computed inside. Forge's IForgeItem.onEntitySwing
+     * veto has no vanilla counterpart and is dropped.
+     * TODO: semantics not confirmed. The attack animation is assumed for this generic swing request;
+     * {@code getInteractAnimation()} is the alternative.
+     */
     private static void swing(ServerPlayer player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (stack.isEmpty() || !stack.onEntitySwing(player)) {
-            if (!player.swinging || player.swingTime >= currentSwingDuration(player) / 2 || player.swingTime < 0) {
-                player.swingTime = -1;
-                player.swinging = true;
-                player.swingingArm = hand;
-                if (player.level() instanceof ServerLevel level) {
-                    var packet = new ClientboundAnimatePacket(player, hand == InteractionHand.MAIN_HAND ? 0 : 3);
-                    ServerChunkCache chunks = level.getChunkSource();
-                    chunks.broadcast(player, packet);
-                }
-            }
-        }
-    }
-
-    private static int currentSwingDuration(LivingEntity entity) {
-        if (MobEffectUtil.hasDigSpeed(entity))
-            return 6 - (1 + MobEffectUtil.getDigSpeedAmplification(entity));
-        return entity.hasEffect(MobEffects.DIG_SLOWDOWN)
-            ? 6 + (1 + entity.getEffect(MobEffects.DIG_SLOWDOWN).getAmplifier()) * 2 : 6;
+        player.swing(hand, stack.getAttackAnimation(), false);
     }
 }

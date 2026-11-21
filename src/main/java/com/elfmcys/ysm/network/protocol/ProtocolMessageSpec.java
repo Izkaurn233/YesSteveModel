@@ -1,7 +1,7 @@
 package com.elfmcys.ysm.network.protocol;
 
 import com.elfmcys.ysm.network.NetworkPayload;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 import us.hebi.quickbuf.ProtoMessage;
 import us.hebi.quickbuf.ProtoSource;
 
@@ -49,6 +49,6 @@ public record ProtocolMessageSpec<T extends ProtoMessage<T>>(int id, MessageDire
 
     @FunctionalInterface
     public interface Handler<T extends ProtoMessage<T>> {
-        void handle(NetworkPayload<T> payload, Supplier<NetworkEvent.Context> context);
+        void handle(NetworkPayload<T> payload, Supplier<PacketContext> context);
     }
 }

@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.network;
 
+import com.elfmcys.ysm.platform.network.Connections;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.buffer.ArrayBuffer;
 import com.elfmcys.ysm.buffer.UniBuffer;
@@ -11,31 +12,47 @@ import com.elfmcys.ysm.network.protocol.MessageDirection;
 import com.elfmcys.ysm.network.protocol.ProtocolMessageSpec;
 import com.elfmcys.ysm.network.protocol.ProtocolMessages;
 import com.elfmcys.ysm.network.protocol.ProtocolVersion;
+import com.elfmcys.ysm.platform.network.PacketContext;
 import io.netty.buffer.Unpooled;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.event.EventNetworkChannel;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import us.hebi.quickbuf.ProtoMessage;
 
-/** The sole Forge adapter for the current YSM frame protocol. */
+import java.util.function.Consumer;
+
+/**
+ * The sole host adapter for the current YSM frame protocol.
+ * <p>
+ * PORT(26.3-fabric): one Fabric custom payload ({@link YsmFramePayload}) replaces the Forge
+ * {@code EventNetworkChannel}. Frame encoding, validation and dispatch are unchanged. Differences from Forge:
+ * <ul>
+ * <li>Fabric invokes payload receivers on the game thread (Forge: netty thread), so frame decoding and
+ * {@code ProtocolInbound.dispatch} now run there. See PROJECT_MEMORY.md, network notes.</li>
+ * <li>Channel presence is Fabric's {@code canSend}, known once channel registration has been exchanged.</li>
+ * </ul>
+ */
 public final class NetworkHandler {
     public static final String VERSION = ProtocolVersion.TRANSPORT_VERSION;
     public static final Identifier CHANNEL_NAME =
         Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, ProtocolVersion.CHANNEL_PATH);
-    public static final EventNetworkChannel CHANNEL =
-        NetworkRegistry.newEventChannel(CHANNEL_NAME, () -> VERSION, ignored -> true, ignored -> true);
+
+    private static volatile @Nullable MinecraftServer server;
 
     private NetworkHandler() {}
 
@@ -46,16 +63,39 @@ public final class NetworkHandler {
         }
     }
 
+    /** Both sides: payload types, the server receiver and the server reference used for broadcasts. */
     public static void init() {
-        CHANNEL.addListener(
-            (NetworkEvent.ServerCustomPayloadEvent event) -> receive(event, MessageDirection.SERVER_TO_CLIENT));
-        CHANNEL.addListener(
-            (NetworkEvent.ClientCustomPayloadEvent event) -> receive(event, MessageDirection.CLIENT_TO_SERVER));
+        PayloadTypeRegistry.serverboundPlay().register(YsmFramePayload.TYPE, YsmFramePayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(YsmFramePayload.TYPE, YsmFramePayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(YsmFramePayload.TYPE, (payload, context) -> {
+            var player = context.player();
+            receive(payload, MessageDirection.CLIENT_TO_SERVER,
+                new PacketContext(Connections.of(player), player, context.server()));
+        });
+        ServerLifecycleEvents.SERVER_STARTING.register(started -> server = started);
+        ServerLifecycleEvents.SERVER_STOPPED.register(stopped -> {
+            if (server == stopped) {
+                server = null;
+            }
+        });
+    }
+
+    /** Client only: the clientbound receiver. */
+    @Environment(EnvType.CLIENT)
+    public static void initClient() {
+        ClientPlayNetworking.registerGlobalReceiver(YsmFramePayload.TYPE, (payload, context) -> {
+            var listener = context.client().getConnection();
+            if (listener == null) {
+                return;
+            }
+            receive(payload, MessageDirection.SERVER_TO_CLIENT,
+                new PacketContext(listener.getConnection(), null, context.client()));
+        });
     }
 
     @SuppressWarnings("ConstantValue")
     public static boolean isPlayerChannelPresent(ServerPlayer player) {
-        return player.connection != null && isChannelPresent(player.connection.connection);
+        return player.connection != null && ServerPlayNetworking.canSend(player, YsmFramePayload.TYPE);
     }
 
     public static boolean isRemoteChannelPresent() {
@@ -63,21 +103,31 @@ public final class NetworkHandler {
         return listener != null && isChannelPresent(listener.getConnection());
     }
 
+    /**
+     * Whether the peer of {@code connection} accepts YSM frames. Callers pass the current client connection.
+     * TODO(26.3-fabric): not verified: that Fabric has exchanged play-channel registration before
+     * ClientSessionRuntime first asks at session start (Forge knew it from the login handshake).
+     */
     public static boolean isChannelPresent(@Nullable Connection connection) {
-        return connection != null && connection.channel() != null && CHANNEL.isRemotePresent(connection);
+        if (connection == null || Connections.channel(connection) == null) {
+            return false;
+        }
+        ClientPacketListener listener = Minecraft.getInstance().getConnection();
+        return listener != null && listener.getConnection() == connection
+            && ClientPlayNetworking.canSend(YsmFramePayload.TYPE);
     }
 
     public static int sendToServer(Connection connection, NetworkPayload<?> payload) {
         try (payload; var protobuf = ProtocolBuffer.serialize(payload.protobuf());
             var empty = ArrayBuffer.allocate(0)) {
-            var spec = messageSpec(payload.protobuf(), NetworkDirection.PLAY_TO_SERVER);
+            var spec = messageSpec(payload.protobuf(), MessageDirection.CLIENT_TO_SERVER);
             var raw = payload.raw().<UniBuffer>map(value -> value).orElse(empty);
             spec.attachmentPolicy().validate(raw.size());
             try (var frame = FrameCodec.encode(spec.id(), protobuf, raw)) {
-                traceNetwork("outbound", "direction=" + NetworkDirection.PLAY_TO_SERVER,
+                traceNetwork("outbound", "direction=" + MessageDirection.CLIENT_TO_SERVER,
                     "message=" + payload.protobuf().getClass().getSimpleName(), "protocolId=" + spec.id(),
                     "protobufBytes=" + protobuf.size(), "attachmentBytes=" + raw.size(), "frameBytes=" + frame.size());
-                sendFrame(NetworkDirection.PLAY_TO_SERVER, connection::send, frame);
+                connection.send(serverbound(frame));
                 return frame.size();
             }
         }
@@ -96,7 +146,12 @@ public final class NetworkHandler {
             payload.close();
             return;
         }
-        send(PacketDistributor.SERVER.noArg(), payload);
+        var listener = Minecraft.getInstance().getConnection();
+        if (listener == null) {
+            payload.close();
+            return;
+        }
+        sendToServer(listener.getConnection(), payload);
     }
 
     public static void sendToClientPlayer(ProtoMessage<?> message, Player player) {
@@ -104,96 +159,111 @@ public final class NetworkHandler {
     }
 
     public static void sendToClientPlayer(NetworkPayload<?> payload, Player player) {
-        send(PacketDistributor.PLAYER.with(() -> (ServerPlayer)player), payload);
+        var target = (ServerPlayer)player;
+        sendToClients(payload, packet -> target.connection.send(packet));
     }
 
     public static void broadcastToAllPlayers(ProtoMessage<?> message) {
-        send(PacketDistributor.ALL.noArg(), payload(message));
+        var current = server;
+        var payload = payload(message);
+        if (current == null) {
+            payload.close();
+            return;
+        }
+        sendToClients(payload, packet -> {
+            for (ServerPlayer player : PlayerLookup.all(current)) {
+                player.connection.send(packet);
+            }
+        });
     }
 
+    /** Forge {@code TRACKING_ENTITY}: players tracking {@code centerEntity}, excluding the entity itself. */
     public static void broadcastToVisiblePlayers(ProtoMessage<?> message, Entity centerEntity) {
-        send(PacketDistributor.TRACKING_ENTITY.with(() -> centerEntity), payload(message));
+        sendToClients(payload(message), packet -> {
+            for (ServerPlayer player : PlayerLookup.tracking(centerEntity)) {
+                player.connection.send(packet);
+            }
+        });
     }
 
     public static void broadcastToVisiblePlayersAndSelf(ProtoMessage<?> message, Player self) {
-        send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> self), payload(message));
+        broadcastToVisiblePlayersAndSelf(message, (Entity)self);
     }
 
+    /** Forge {@code TRACKING_ENTITY_AND_SELF}: as above, plus the entity when it is a player. */
     public static void broadcastToVisiblePlayersAndSelf(ProtoMessage<?> message, Entity centerEntity) {
-        send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> centerEntity), payload(message));
-    }
-
-    public static void sendFrame(PacketDistributor.PacketTarget target, OutboundFrame frame) {
-        sendFrame(target.getDirection(), target::send, frame);
-    }
-
-    private static void sendFrame(NetworkDirection direction,
-        java.util.function.Consumer<net.minecraft.network.protocol.Packet<?>> sender, OutboundFrame frame) {
-        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer(frame.size(), frame.size()));
-        var submitted = false;
-        try {
-            ForgeUniBufferIO.write(buffer, frame.borrow());
-            var packet = direction.buildPacket(Pair.of(buffer, 0), CHANNEL_NAME).getThis();
-            sender.accept(packet);
-            submitted = true;
-        } finally {
-            if (!submitted) {
-                buffer.release();
+        sendToClients(payload(message), packet -> {
+            for (ServerPlayer player : PlayerLookup.tracking(centerEntity)) {
+                if (player != centerEntity) {
+                    player.connection.send(packet);
+                }
             }
-        }
+            if (centerEntity instanceof ServerPlayer self) {
+                self.connection.send(packet);
+            }
+        });
     }
 
-    private static void send(PacketDistributor.PacketTarget target, NetworkPayload<?> payload) {
+    /** Sends an already-encoded clientbound frame to one player (used by the asset transfer port). */
+    public static void sendFrame(ServerPlayer player, OutboundFrame frame) {
+        player.connection.send(clientbound(frame));
+    }
+
+    private static Packet<?> clientbound(OutboundFrame frame) {
+        return ServerPlayNetworking.createClientboundPacket(new YsmFramePayload(frame.bytes()));
+    }
+
+    private static Packet<?> serverbound(OutboundFrame frame) {
+        return ClientPlayNetworking.createServerboundPacket(new YsmFramePayload(frame.bytes()));
+    }
+
+    /** One encoded clientbound packet, shared by every recipient (vanilla packets are immutable once built). */
+    private static void sendToClients(NetworkPayload<?> payload, Consumer<Packet<?>> sender) {
         try (payload; var protobuf = ProtocolBuffer.serialize(payload.protobuf())) {
             var attachment =
                 payload.raw().<UniBuffer>map(value -> value).orElseGet(() -> ArrayBuffer.borrow(new byte[0]));
-            var spec = messageSpec(payload.protobuf(), target.getDirection());
+            var spec = messageSpec(payload.protobuf(), MessageDirection.SERVER_TO_CLIENT);
             spec.attachmentPolicy().validate(attachment.size());
             try (var frame = FrameCodec.encode(spec.id(), protobuf, attachment)) {
-                traceNetwork("outbound", "direction=" + target.getDirection(),
+                traceNetwork("outbound", "direction=" + MessageDirection.SERVER_TO_CLIENT,
                     "message=" + payload.protobuf().getClass().getSimpleName(), "protocolId=" + spec.id(),
                     "protobufBytes=" + protobuf.size(), "attachmentBytes=" + attachment.size(),
                     "frameBytes=" + frame.size());
-                sendFrame(target, frame);
+                sender.accept(clientbound(frame));
             }
         }
     }
 
-    private static ProtocolMessageSpec<?> messageSpec(ProtoMessage<?> message, NetworkDirection direction) {
+    private static ProtocolMessageSpec<?> messageSpec(ProtoMessage<?> message, MessageDirection expected) {
         var spec = ProtocolMessages.REGISTRY.find(message.getClass()).orElseThrow(
             () -> new IllegalArgumentException("Unregistered protocol message type: " + message.getClass().getName()));
-        var expected = direction == NetworkDirection.PLAY_TO_SERVER ? MessageDirection.CLIENT_TO_SERVER
-            : MessageDirection.SERVER_TO_CLIENT;
         if (spec.direction() != expected) {
             throw new IllegalArgumentException("Protocol message has the wrong network direction");
         }
         return spec;
     }
 
-    private static void receive(NetworkEvent event, MessageDirection direction) {
-        var context = event.getSource();
-        traceNetwork("inbound", "direction=" + direction, "frameBytes=" + event.getPayload().readableBytes());
+    private static void receive(YsmFramePayload payload, MessageDirection direction, PacketContext context) {
+        var bytes = payload.frame();
+        traceNetwork("inbound", "direction=" + direction, "frameBytes=" + bytes.length);
         try {
-            var wire = com.elfmcys.ysm.buffer.SharedNativeBuffer
-                .adopt(ForgeUniBufferIO.readNative(event.getPayload(), event.getPayload().readableBytes()));
+            var source = new FriendlyByteBuf(Unpooled.wrappedBuffer(bytes));
+            var wire = com.elfmcys.ysm.buffer.SharedNativeBuffer.adopt(ForgeUniBufferIO.readNative(source, bytes.length));
             try (var frame = FrameCodec.decode(wire, id -> ProtocolInbound.accepts(id, direction))) {
                 var spec = ProtocolMessages.REGISTRY.find(frame.messageId()).orElseThrow();
-                ProtocolInbound.dispatch(frame, spec, context);
+                ProtocolInbound.dispatch(frame, spec, () -> context);
             }
         } catch (RuntimeException error) {
             YesSteveModel.LOGGER.warn("Rejected invalid YSM frame", error);
             if (direction == MessageDirection.SERVER_TO_CLIENT) {
-                var source = context.get();
-                var connection = source.getNetworkManager();
-                source.enqueueWork(() -> {
+                var connection = context.getNetworkManager();
+                context.enqueueWork(() -> {
                     try {
                         ClientSessionRuntime.failProtocolSession(connection);
                     } catch (IllegalStateException ignored) {
                     }
                 });
             }
-        } finally {
-            context.get().setPacketHandled(true);
         }
     }
 

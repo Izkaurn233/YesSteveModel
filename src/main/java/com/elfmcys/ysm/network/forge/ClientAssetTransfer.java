@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.network.forge;
 
+import com.elfmcys.ysm.platform.network.Connections;
 import com.elfmcys.ysm.buffer.BufferStorage;
 import com.elfmcys.ysm.buffer.ArrayBuffer;
 import com.elfmcys.ysm.buffer.UniBuffer;
@@ -99,10 +100,10 @@ final class ClientAssetTransfer implements RemoteChunkFetcher, RemoteMetadataFet
 
             @Override
             public boolean writable() {
-                if (!connection.isConnected() || !connection.channel().isWritable())
+                if (!connection.isConnected() || !Connections.channel(connection).isWritable())
                     return false;
-                var outbound = connection.channel().unsafe().outboundBuffer();
-                return outbound == null || outbound.totalPendingWriteBytes() + 30L * 1024 < connection.channel()
+                var outbound = Connections.channel(connection).unsafe().outboundBuffer();
+                return outbound == null || outbound.totalPendingWriteBytes() + 30L * 1024 < Connections.channel(connection)
                     .config().getWriteBufferHighWaterMark();
             }
 

@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 import net.minecraft.world.entity.Entity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 
 public final class MinecraftStateHandler {
     private MinecraftStateHandler() {}
@@ -40,7 +40,7 @@ public final class MinecraftStateHandler {
     }
 
     public static void handleProjectile(ProjectileModelStateProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         if (!ModelReferenceCodec.valid(message.model())) {
             context.setPacketHandled(true);
@@ -54,7 +54,7 @@ public final class MinecraftStateHandler {
         context.setPacketHandled(true);
     }
 
-    public static void handleVehicle(VehicleModelStateProto message, Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handleVehicle(VehicleModelStateProto message, Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         if (!ModelReferenceCodec.valid(message.model())) {
             context.setPacketHandled(true);

@@ -3,6 +3,7 @@ package com.elfmcys.ysm.fabric;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.CapabilityBootstrap;
 import com.elfmcys.ysm.event.CapabilityEvent;
+import com.elfmcys.ysm.event.CommonEvent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
@@ -27,6 +28,7 @@ public final class YesSteveModelFabric implements ModInitializer {
         } catch (IOException exception) {
             throw new UncheckedIOException("YSM failed to initialize", exception);
         }
+        CommonEvent.onSetup();
         registerCapabilityEvents();
     }
 

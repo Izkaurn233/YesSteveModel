@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -82,7 +82,7 @@ public final class PlayerStateHandler {
         }
     }
 
-    public static void handleReport(PlayerStateReportProto report, Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handleReport(PlayerStateReportProto report, Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         var sender = context.getSender();
         if (sender == null) {
@@ -115,7 +115,7 @@ public final class PlayerStateHandler {
         context.setPacketHandled(true);
     }
 
-    public static void handleUpdate(PlayerStateUpdateProto update, Supplier<NetworkEvent.Context> contextSupplier) {
+    public static void handleUpdate(PlayerStateUpdateProto update, Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         if (!PlayerStateValidator.validUpdate(update)) {
             context.setPacketHandled(true);

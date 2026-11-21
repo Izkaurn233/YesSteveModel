@@ -4,7 +4,7 @@ import com.elfmcys.ysm.network.frame.FrameCodec;
 import com.elfmcys.ysm.network.protocol.MessageDirection;
 import com.elfmcys.ysm.network.protocol.ProtocolMessageSpec;
 import com.elfmcys.ysm.network.protocol.ProtocolMessages;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 import us.hebi.quickbuf.ProtoMessage;
 
 import java.util.function.Supplier;
@@ -31,7 +31,7 @@ final class ProtocolInbound {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     static void dispatch(FrameCodec.DecodedFrame frame, ProtocolMessageSpec<?> spec,
-        Supplier<NetworkEvent.Context> context) {
+        Supplier<PacketContext> context) {
         if (frame.messageId() != spec.id()) {
             throw new IllegalArgumentException("Frame and protocol spec ids do not match");
         }
@@ -39,7 +39,7 @@ final class ProtocolInbound {
     }
 
     private static <T extends ProtoMessage<T>> void dispatchTyped(FrameCodec.DecodedFrame frame,
-        ProtocolMessageSpec<T> spec, Supplier<NetworkEvent.Context> context) {
+        ProtocolMessageSpec<T> spec, Supplier<PacketContext> context) {
         var protobuf = frame.protobuf();
         var attachment = frame.attachment();
         if (protobuf.size() > spec.maxEncodedBytes()) {

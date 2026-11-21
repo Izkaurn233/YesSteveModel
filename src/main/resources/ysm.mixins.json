@@ -26,6 +26,8 @@
     "client.LevelRendererMixin"
   ],
   "mixins": [
+    "accessor.ConnectionAccessor",
+    "accessor.ServerCommonPacketListenerAccessor",
     "AbstractArrowEntityMixin",
     "EntityCapabilityHolderMixin",
     "ConnectionMixin",

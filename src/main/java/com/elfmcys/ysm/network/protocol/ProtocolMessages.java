@@ -42,7 +42,7 @@ import com.elfmcys.ysm.proto.network.SubmitConfigActionRequestProto;
 import com.elfmcys.ysm.proto.network.SwingHandRequestProto;
 import com.elfmcys.ysm.proto.network.UpdateStarredModelRequestProto;
 import com.elfmcys.ysm.proto.network.VehicleModelStateProto;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 import us.hebi.quickbuf.ProtoMessage;
 
 import java.util.function.BiConsumer;
@@ -242,13 +242,13 @@ public final class ProtocolMessages {
 
     private static <T extends ProtoMessage<T>> ProtocolMessageSpec<T> proto(int id, MessageDirection direction,
         Class<T> type, int maxBytes, ProtocolMessageSpec.Parser<T> parser,
-        BiConsumer<T, Supplier<NetworkEvent.Context>> handler) {
+        BiConsumer<T, Supplier<PacketContext>> handler) {
         return new ProtocolMessageSpec<>(id, direction, type, maxBytes, ProtocolMessageSpec.AttachmentPolicy.FORBIDDEN,
             parser, (payload, context) -> handleProto(payload, context, handler));
     }
 
     private static <T extends ProtoMessage<T>> void handleProto(NetworkPayload<T> payload,
-        Supplier<NetworkEvent.Context> context, BiConsumer<T, Supplier<NetworkEvent.Context>> handler) {
+        Supplier<PacketContext> context, BiConsumer<T, Supplier<PacketContext>> handler) {
         try (payload) {
             if (payload.raw().isPresent()) {
                 throw new IllegalArgumentException(

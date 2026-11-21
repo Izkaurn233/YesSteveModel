@@ -8,7 +8,8 @@ import io.netty.channel.ChannelPromise;
 import net.minecraft.network.CompressionEncoder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
-import net.minecraftforge.network.ICustomPacket;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 
 public final class ChannelCompressionBypass {
     public static final String MARKER_HANDLER = "ysm_compression_marker";
@@ -29,7 +30,11 @@ public final class ChannelCompressionBypass {
 
         @Override
         public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
-            var bypass = message instanceof ICustomPacket<?> packet && channelName.equals(packet.getName());
+            // PORT(26.3-fabric): Forge ICustomPacket is gone; YSM frames are vanilla custom payload packets.
+            var bypass = message instanceof ClientboundCustomPayloadPacket(var clientbound)
+                && channelName.equals(clientbound.type().id())
+                || message instanceof ServerboundCustomPayloadPacket(var serverbound)
+                    && channelName.equals(serverbound.type().id());
             var previous = BYPASS_COMPRESSION.get();
             BYPASS_COMPRESSION.set(bypass);
             try {

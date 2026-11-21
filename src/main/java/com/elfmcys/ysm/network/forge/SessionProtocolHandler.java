@@ -53,7 +53,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 import us.hebi.quickbuf.ProtoMessage;
 
 /** Typed model-session handlers; game-state publication is gated onto the owner thread. */
@@ -75,7 +75,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleServerHello(NetworkPayload<ServerHelloProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "ServerHello");
             var message = payload.protobuf();
@@ -99,7 +99,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleSessionResponse(NetworkPayload<SessionResponseProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "SessionResponse");
             var context = contextSupplier.get();
@@ -119,7 +119,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleSessionFullFragment(NetworkPayload<SessionFullFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "SessionFullFragment");
             var message = payload.protobuf();
@@ -130,7 +130,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleSessionDeltaFragment(NetworkPayload<SessionDeltaFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "SessionDeltaFragment");
             var message = payload.protobuf();
@@ -141,7 +141,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePreviewAvailable(NetworkPayload<PreviewAvailableProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "PreviewAvailable");
             var message = payload.protobuf();
@@ -152,7 +152,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleMetadataPrefixRequest(NetworkPayload<MetadataPrefixRequestProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "MetadataPrefixRequest");
             var request = payload.protobuf();
@@ -171,7 +171,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleMissingPreviewQuery(NetworkPayload<MissingPreviewQueryProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "MissingPreviewQuery");
             var request = payload.protobuf();
@@ -188,7 +188,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePreviewUploadRequest(NetworkPayload<PreviewUploadRequestProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "PreviewUploadRequest");
             var request = payload.protobuf();
@@ -205,7 +205,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePreviewUploadFragment(NetworkPayload<PreviewUploadFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var message = payload.protobuf();
         var context = contextSupplier.get();
         var sender = context.getSender();
@@ -224,7 +224,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleGenPreviewStart(NetworkPayload<GenPreviewStartProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "GenPreviewStart");
             var message = payload.protobuf();
@@ -235,7 +235,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleMissingPreviewFragment(NetworkPayload<MissingPreviewFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "MissingPreviewFragment");
             var message = payload.protobuf();
@@ -246,7 +246,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePreviewUploadAdmission(NetworkPayload<PreviewUploadAdmissionProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "PreviewUploadAdmission");
             var message = payload.protobuf();
@@ -257,7 +257,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePreviewRepairResult(NetworkPayload<PreviewRepairResultProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "PreviewRepairResult");
             var message = payload.protobuf();
@@ -268,7 +268,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleModelChunkRequest(NetworkPayload<ModelChunkRequestProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "ModelChunkRequest");
             var request = payload.protobuf();
@@ -287,7 +287,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePresentationPageRequest(NetworkPayload<PresentationPageRequestProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "PresentationPageRequest");
             var request = payload.protobuf();
@@ -306,7 +306,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleResourceTransferCancel(NetworkPayload<ResourceTransferCancelProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "ResourceTransferCancel");
             var context = contextSupplier.get();
@@ -325,7 +325,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleResourceTransferFailure(NetworkPayload<ResourceTransferFailureProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "ResourceTransferFailure");
             var message = payload.protobuf();
@@ -336,7 +336,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleMetadataPrefixFragment(NetworkPayload<MetadataPrefixFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "MetadataPrefixFragment");
             var message = payload.protobuf();
@@ -347,7 +347,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleChunkFragment(NetworkPayload<ChunkFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var message = payload.protobuf();
         var context = contextSupplier.get();
         var connection = context.getNetworkManager();
@@ -360,22 +360,22 @@ public final class SessionProtocolHandler {
     }
 
     public static void handlePreviewFragment(NetworkPayload<PreviewFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         handlePresentationFragment(payload, contextSupplier, ClientSessionRuntime::acceptPreviewFragment);
     }
 
     public static void handleIconFragment(NetworkPayload<IconFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         handlePresentationFragment(payload, contextSupplier, ClientSessionRuntime::acceptIconFragment);
     }
 
     public static void handlePackCoverFragment(NetworkPayload<PackCoverFragmentProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         handlePresentationFragment(payload, contextSupplier, ClientSessionRuntime::acceptPackCoverFragment);
     }
 
     public static void handleSelectModelRequest(NetworkPayload<SelectModelRequestProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "SelectModelRequest");
             var context = contextSupplier.get();
@@ -395,7 +395,7 @@ public final class SessionProtocolHandler {
     }
 
     public static void handleSelectModelResult(NetworkPayload<SelectModelResultProto> payload,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         try (payload) {
             requireNoAttachment(payload, "SelectModelResult");
             var message = payload.protobuf();
@@ -499,7 +499,7 @@ public final class SessionProtocolHandler {
             transition = session.commitCatalog(catalog);
         } catch (RuntimeException invalidPublication) {
             YesSteveModel.LOGGER.error("Failed to commit initial model-session authority for {}",
-                player.getGameProfile().getName(), invalidPublication);
+                player.getGameProfile().name(), invalidPublication);
             return;
         }
         if (beforeSelection instanceof Selection.Model
@@ -528,7 +528,7 @@ public final class SessionProtocolHandler {
             transition = session.commitCatalog(catalog, requestedGrants);
         } catch (RuntimeException invalidPublication) {
             YesSteveModel.LOGGER.error("Failed to commit model-session authority for {}",
-                player.getGameProfile().getName(), invalidPublication);
+                player.getGameProfile().name(), invalidPublication);
             return;
         }
         player.getCapability(ModelInfoCapabilityProvider.MODEL_INFO_CAP)
@@ -581,13 +581,13 @@ public final class SessionProtocolHandler {
                 packet.close();
                 packet = null;
                 YesSteveModel.LOGGER.warn("{} was rejected by dispatch admission for {}", description,
-                    player.getGameProfile().getName());
+                    player.getGameProfile().name());
             }
         } catch (RuntimeException failure) {
             if (packet != null) {
                 packet.close();
             }
-            YesSteveModel.LOGGER.warn("Failed to enqueue {} for {}", description, player.getGameProfile().getName(),
+            YesSteveModel.LOGGER.warn("Failed to enqueue {} for {}", description, player.getGameProfile().name(),
                 failure);
         }
     }
@@ -599,7 +599,7 @@ public final class SessionProtocolHandler {
     }
 
     private static <T extends ProtoMessage<T>> void handlePresentationFragment(NetworkPayload<T> payload,
-        Supplier<NetworkEvent.Context> contextSupplier, PresentationFragmentConsumer<T> consumer) {
+        Supplier<PacketContext> contextSupplier, PresentationFragmentConsumer<T> consumer) {
         var message = payload.protobuf();
         var context = contextSupplier.get();
         var connection = context.getNetworkManager();

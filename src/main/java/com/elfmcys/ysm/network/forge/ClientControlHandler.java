@@ -16,7 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.network.NetworkEvent;
+import com.elfmcys.ysm.platform.network.PacketContext;
 
 import static com.elfmcys.ysm.network.forge.ControlHandler.*;
 
@@ -26,7 +26,7 @@ final class ClientControlHandler {
     private ClientControlHandler() {}
 
     static void handleStarredModels(StarredModelsSnapshotProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         var hashes = readHashSet(message.modelHashes());
         var connection = context.getNetworkManager();
@@ -42,7 +42,7 @@ final class ClientControlHandler {
     }
 
     static void handlePrivilegedTransient(PrivilegedTransientEventProto message,
-        Supplier<NetworkEvent.Context> contextSupplier) {
+        Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         if (validPrivilegedTransient(message)) {
             var connection = context.getNetworkManager();
@@ -52,7 +52,7 @@ final class ClientControlHandler {
         context.setPacketHandled(true);
     }
 
-    static void handleConfigAction(ConfigActionEventProto message, Supplier<NetworkEvent.Context> contextSupplier) {
+    static void handleConfigAction(ConfigActionEventProto message, Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         if (validWireAction(message.action())) {
             var connection = context.getNetworkManager();
@@ -68,7 +68,7 @@ final class ClientControlHandler {
         context.setPacketHandled(true);
     }
 
-    static void handleMolangSync(MolangSyncEventProto message, Supplier<NetworkEvent.Context> contextSupplier) {
+    static void handleMolangSync(MolangSyncEventProto message, Supplier<PacketContext> contextSupplier) {
         var context = contextSupplier.get();
         if (ExpressionProtocol.validIdentity(message.identity()) && validArguments(message.arguments())) {
             var connection = context.getNetworkManager();

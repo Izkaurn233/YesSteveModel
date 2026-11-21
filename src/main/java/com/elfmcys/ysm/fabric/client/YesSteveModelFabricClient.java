@@ -25,6 +25,9 @@ public final class YesSteveModelFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         com.elfmcys.ysm.capability.CapabilityBootstrap.client();
+        if (com.elfmcys.ysm.YesSteveModel.isAvailable()) {
+            com.elfmcys.ysm.network.NetworkHandler.initClient();
+        }
         ClientSetupEvent.onRegisterKeyMappings();
         registerInput();
         registerTicks();
