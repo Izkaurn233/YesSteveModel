@@ -1,48 +1,51 @@
 package com.elfmcys.ysm.client.event;
 
 import com.elfmcys.ysm.YesSteveModel;
+import com.elfmcys.ysm.platform.input.GlfwKeyCompat;
 import com.elfmcys.ysm.util.InputCheckUtil;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = YesSteveModel.MOD_ID)
+/**
+ * Held-key state for model Molang. Both arrays stay indexed by GLFW codes, the codes model packs were written against.
+ * PORT(26.3-fabric): input arrives as SDL scancodes and 1-based buttons and is translated by {@link GlfwKeyCompat}.
+ * Registered from {@code YesSteveModelFabricClient}.
+ */
 public class ModInputEvent {
-    public static volatile boolean[] KEY_STATES = new boolean[GLFW.GLFW_KEY_LAST + 1];
-    public static volatile boolean[] MOUSE_STATES = new boolean[GLFW.GLFW_MOUSE_BUTTON_LAST + 1];
+    public static volatile boolean[] KEY_STATES = new boolean[GlfwKeyCompat.GLFW_KEY_LAST + 1];
+    public static volatile boolean[] MOUSE_STATES = new boolean[GlfwKeyCompat.GLFW_MOUSE_BUTTON_LAST + 1];
 
-    @SubscribeEvent
-    public static void onKeyInput(InputEvent.Key event) {
+    public static void onKeyInput(KeyEvent event, int action) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
         if (!InputCheckUtil.isInGame()) {
             return;
         }
-        if (GLFW.GLFW_KEY_SPACE <= event.getKey() && event.getKey() <= GLFW.GLFW_KEY_LAST) {
-            if (event.getAction() == GLFW.GLFW_PRESS) {
-                KEY_STATES[event.getKey()] = true;
-            } else if (event.getAction() == GLFW.GLFW_RELEASE) {
-                KEY_STATES[event.getKey()] = false;
+        int key = GlfwKeyCompat.toGlfwKey(event.key());
+        if (GlfwKeyCompat.GLFW_KEY_FIRST <= key && key <= GlfwKeyCompat.GLFW_KEY_LAST) {
+            if (action == InputConstants.PRESS) {
+                KEY_STATES[key] = true;
+            } else if (action == InputConstants.RELEASE) {
+                KEY_STATES[key] = false;
             }
         }
     }
 
-    @SubscribeEvent
-    public static void onMouseInput(InputEvent.MouseButton.Post event) {
+    public static void onMouseInput(MouseButtonInfo info, int action) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
         if (!InputCheckUtil.isInGame()) {
             return;
         }
-        if (GLFW.GLFW_MOUSE_BUTTON_1 <= event.getButton() && event.getButton() <= GLFW.GLFW_MOUSE_BUTTON_LAST) {
-            if (event.getAction() == GLFW.GLFW_PRESS) {
-                MOUSE_STATES[event.getButton()] = true;
-            } else if (event.getAction() == GLFW.GLFW_RELEASE) {
-                MOUSE_STATES[event.getButton()] = false;
+        int button = GlfwKeyCompat.toGlfwMouseButton(info.button());
+        if (0 <= button && button <= GlfwKeyCompat.GLFW_MOUSE_BUTTON_LAST) {
+            if (action == InputConstants.PRESS) {
+                MOUSE_STATES[button] = true;
+            } else if (action == InputConstants.RELEASE) {
+                MOUSE_STATES[button] = false;
             }
         }
     }

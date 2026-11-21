@@ -7,29 +7,25 @@ import com.elfmcys.ysm.client.texture.CustomTextureManager;
 import com.elfmcys.ysm.config.ClientConfig;
 import com.elfmcys.ysm.network.forge.ClientProtocolGateway;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+// PORT(26.3-fabric): registered on Fabric ClientTickEvents.START_CLIENT_TICK (Forge TickEvent.Phase.START).
 public class ClientTickEvent {
     private static int tickCount;
     private static int refreshRate = 60;
 
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
+    public static void onClientTick() {
         if (!YesSteveModel.isAvailable()) {
             RegisterEntityRenderersEvent.releaseFirstPersonArm();
-            return;
-        }
-        if (event.phase == TickEvent.Phase.END) {
             return;
         }
         tickCount++;
         CustomTextureManager.tick();
         ClientModelService.current().ifPresent(ClientModelService::tick);
-        refreshRate = Minecraft.getInstance().getWindow().getRefreshRate();
+        // PORT(26.3-fabric): Window.getRefreshRate() is gone; the active SDL video mode carries a float refresh rate.
+        var videoMode = Minecraft.getInstance().getWindow().getActiveVideoMode();
+        if (videoMode != null && videoMode.getRefreshRate() > 0) {
+            refreshRate = Math.round(videoMode.getRefreshRate());
+        }
 
         var player = Minecraft.getInstance().player;
         if (player == null || ClientConfig.DISABLE_SELF_MODEL.get() || ClientConfig.DISABLE_SELF_HANDS.get()) {

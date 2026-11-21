@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.event;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.AuthModelsCapability;
 import com.elfmcys.ysm.capability.AuthModelsCapabilityProvider;
@@ -31,7 +32,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
@@ -39,7 +39,6 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @Mod.EventBusSubscriber
 @SuppressWarnings("removal")
@@ -94,7 +93,7 @@ public final class CapabilityEvent {
             }
         }
 
-        if (FMLEnvironment.dist == Dist.CLIENT && entity.level().isClientSide()) {
+        if (Platform.isClient() && entity.level().isClientSide()) {
             // 客户端玩家
             if (entity instanceof AbstractClientPlayer clientPlayer
                 && !clientPlayer.getCapability(PlayerAnimatableCapabilityProvider.CAP).isPresent()
@@ -229,7 +228,7 @@ public final class CapabilityEvent {
                 });
             }
             ServerModelService.current().ifPresent(service -> {
-                if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+                if (Platform.isDedicatedServer()) {
                     var system = ModelRuntime.system();
                     system.tickCatalog();
                     system.tickServerRuntime();

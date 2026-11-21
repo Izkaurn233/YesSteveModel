@@ -1,11 +1,12 @@
 package com.elfmcys.ysm.client.event;
 
+import net.fabricmc.api.EnvType;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.client.gui.DownloadScreen;
 import com.elfmcys.ysm.client.gui.PlayerModelScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.Environment;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = YesSteveModel.MOD_ID, value = Dist.CLIENT)
 public class DownloadScreenInterModEvent {
     private static final String DOWNLOAD_SCREEN_METHOD = "DownloadScreen";

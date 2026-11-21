@@ -47,10 +47,10 @@ public abstract class ModelScreen extends Screen {
         }
         var minecraft = Minecraft.getInstance();
         try {
-            minecraft.setScreen(screen);
+            minecraft.gui.setScreen(screen);
         } finally {
             // A cancelled opening keeps the source in the same world-bound flow.
-            if (lifetime != null && lifetime.isCurrent() && minecraft.screen == this)
+            if (lifetime != null && lifetime.isCurrent() && minecraft.gui.screen() == this)
                 lifetime.displayed = new WeakReference<>(this);
         }
     }
@@ -97,8 +97,8 @@ public abstract class ModelScreen extends Screen {
             return;
         var screen = closing.displayed.get();
         closing.retire();
-        if (screen != null && Minecraft.getInstance().screen == screen)
-            Minecraft.getInstance().setScreen(null);
+        if (screen != null && Minecraft.getInstance().gui.screen() == screen)
+            Minecraft.getInstance().gui.setScreen(null);
         ResourceDiagnostics.log("model GUI world retired: world={}", System.identityHashCode(level));
     }
 

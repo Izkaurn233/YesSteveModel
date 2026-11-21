@@ -2,8 +2,8 @@ package com.elfmcys.ysm.capability;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
@@ -12,7 +12,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class VehicleAnimatableCapabilityProvider implements ICapabilityProvider {
     public static Capability<VehicleAnimatableCapability> CAP = CapabilityManager.get(new CapabilityToken<>() {});
     private VehicleAnimatableCapability instance;

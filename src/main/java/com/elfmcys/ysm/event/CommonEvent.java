@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.event;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.AuthModelsCapability;
 import com.elfmcys.ysm.capability.ModelInfoCapability;
@@ -11,13 +12,11 @@ import com.elfmcys.ysm.capability.VehicleAnimatableCapability;
 import com.elfmcys.ysm.capability.VehicleModelInfoCapability;
 import com.elfmcys.ysm.model.ModelRuntime;
 import com.elfmcys.ysm.network.NetworkHandler;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class CommonEvent {
@@ -30,7 +29,7 @@ public final class CommonEvent {
         event.enqueueWork(() -> {
             ModelRuntime.initialize();
             NetworkHandler.init();
-            if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+            if (Platform.isDedicatedServer()) {
                 ModelRuntime.system().catalog().activate();
             }
         });
@@ -46,7 +45,7 @@ public final class CommonEvent {
         event.register(VehicleModelInfoCapability.class);
         event.register(AuthModelsCapability.class);
         event.register(StarModelsCapability.class);
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (Platform.isClient()) {
             event.register(PlayerAnimatableCapability.class);
             event.register(ProjectileAnimatableCapability.class);
             event.register(VehicleAnimatableCapability.class);

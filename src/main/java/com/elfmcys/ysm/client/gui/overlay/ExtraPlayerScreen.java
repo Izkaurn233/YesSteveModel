@@ -21,7 +21,7 @@ public class ExtraPlayerScreen implements IGuiOverlay {
         if (player == null) {
             return;
         }
-        if (mc.screen instanceof ExtraPlayerConfigScreen) {
+        if (mc.gui.screen() instanceof ExtraPlayerConfigScreen) {
             return;
         }
 

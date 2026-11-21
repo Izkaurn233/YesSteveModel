@@ -581,7 +581,7 @@ public class AnimationRouletteScreen extends Screen {
                 Component.translatable("message.yes_steve_model.model.animation_roulette.play", selectKey);
             player.sendSystemMessage(component);
         }
-        this.getMinecraft().setScreen(null);
+        this.getMinecraft().gui.setScreen(null);
     }
 
     private void clickClassify(String selectKey) {
@@ -598,7 +598,7 @@ public class AnimationRouletteScreen extends Screen {
             CACHE.addLast(MutablePair.of(key, 0));
             AnimationRouletteScreen screen =
                 new AnimationRouletteScreen(this.buttonMap, this.classifyMap, this.model, this.animatableEntity);
-            this.getMinecraft().setScreen(screen);
+            this.getMinecraft().gui.setScreen(screen);
         }
     }
 
@@ -607,9 +607,9 @@ public class AnimationRouletteScreen extends Screen {
             CACHE.removeLast();
             AnimationRouletteScreen screen =
                 new AnimationRouletteScreen(this.buttonMap, this.classifyMap, this.model, this.animatableEntity);
-            this.getMinecraft().setScreen(screen);
+            this.getMinecraft().gui.setScreen(screen);
         } else {
-            this.getMinecraft().setScreen(null);
+            this.getMinecraft().gui.setScreen(null);
         }
     }
 

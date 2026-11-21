@@ -1,9 +1,8 @@
 package com.elfmcys.ysm.model.catalog.source;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.AssetPaths;
 import com.elfmcys.ysm.model.ModelRuntime;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -39,7 +38,7 @@ public final class ModelCatalogSources {
         });
         sources.add(new ModelCatalogSource(CatalogRoot.LOCAL_CUSTOM, paths.customModelsRoot(), true));
         sources.add(new ModelCatalogSource(CatalogRoot.LOCAL_AUTH, paths.authModelsRoot(),
-            FMLEnvironment.dist == Dist.DEDICATED_SERVER));
+            Platform.isDedicatedServer()));
         return List.copyOf(sources);
     }
 

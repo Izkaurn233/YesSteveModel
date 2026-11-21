@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.event;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.model.service.ClientModelService;
 import com.elfmcys.ysm.command.RootCommand;
@@ -12,11 +13,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +40,7 @@ public final class CommandRegistry {
     public static final SuggestionProvider<CommandSourceStack> ALL_ANIMATIONS =
         SuggestionProviders.register(new ResourceLocation(YesSteveModel.MOD_ID, "animations"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider) {
-                if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+                if (Platform.isDedicatedServer()) {
                     // Fixme: 应该为服务器后台也添加提示功能
                     return Suggestions.empty();
                 } else {

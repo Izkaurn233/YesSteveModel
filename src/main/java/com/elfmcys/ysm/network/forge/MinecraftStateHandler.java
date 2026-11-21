@@ -16,8 +16,8 @@ import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraftforge.network.NetworkEvent;
 
 public final class MinecraftStateHandler {
@@ -82,7 +82,7 @@ public final class MinecraftStateHandler {
         return result;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @SuppressWarnings("DataFlowIssue")
     private static void applyProjectile(Entity entity, Hash256 modelHash, Int2FloatOpenHashMap variables) {
         entity.getCapability(ClientLazyCapabilityProvider.CAP).ifPresent(capability -> {
@@ -92,7 +92,7 @@ public final class MinecraftStateHandler {
         });
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     private static void applyVehicle(Entity entity, Hash256 modelHash, Int2FloatOpenHashMap variables) {
         com.elfmcys.ysm.network.NetworkHandler.traceNetwork("vehicle-model-apply", "vehicleId=" + entity.getId(),
             "modelKey=" + modelHash.roamingHash(), "variables=" + variables.size());

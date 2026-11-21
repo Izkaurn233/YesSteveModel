@@ -30,15 +30,15 @@ public class AndroidCompat {
             Component skinName = Component.translatable("gui.yes_steve_model.skin");
             Button skinButton = Button.builder(skinName, button -> {
                 if (ClientConfig.DISCLAIMER_SHOW.get()) {
-                    mc.setScreen(new DisclaimerScreen());
+                    mc.gui.setScreen(new DisclaimerScreen());
                 } else {
-                    mc.setScreen(new PlayerModelScreen());
+                    mc.gui.setScreen(new PlayerModelScreen());
                 }
             }).bounds(screen.width / 2 - 69, screen.height - 35, 138, 30).build();
             skinButton.setTooltip(Tooltip.create(Component.translatable("key.yes_steve_model.player_model.desc")));
 
             Component configIcon = Component.literal("\uD83D\uDD27");
-            Button extraPlayerButton = Button.builder(configIcon, button -> mc.setScreen(new ExtraPlayerConfigScreen()))
+            Button extraPlayerButton = Button.builder(configIcon, button -> mc.gui.setScreen(new ExtraPlayerConfigScreen()))
                 .bounds(screen.width / 2 - 120, screen.height - 35, 50, 30).build();
             extraPlayerButton.setTooltip(
                 Tooltip.create(Component.translatable("key.yes_steve_model.open_extra_player_render.desc")));
@@ -50,7 +50,7 @@ public class AndroidCompat {
                         String modelId = cap.getModelId();
                         var model = cap.getModelRenderTarget();
                         if (model != null && !model.info().getExtraAnimations().isEmpty()) {
-                            mc.setScreen(new AnimationRouletteScreen(modelId, model, cap));
+                            mc.gui.setScreen(new AnimationRouletteScreen(modelId, model, cap));
                         }
                     });
                 }

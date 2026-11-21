@@ -157,7 +157,8 @@ public final class ModelBuiltins implements EntityComponent<Entity> {
         if (!com.elfmcys.ysm.util.InputCheckUtil.isInGame()) return false;
         for (float key : keys) {
             int index = (int)key;
-            if (org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE <= index && index <= org.lwjgl.glfw.GLFW.GLFW_KEY_LAST
+            if (com.elfmcys.ysm.platform.input.GlfwKeyCompat.GLFW_KEY_FIRST <= index
+                && index <= com.elfmcys.ysm.platform.input.GlfwKeyCompat.GLFW_KEY_LAST
                 && com.elfmcys.ysm.client.event.ModInputEvent.KEY_STATES[index]) return true;
         }
         return false;
@@ -166,10 +167,8 @@ public final class ModelBuiltins implements EntityComponent<Entity> {
     @BuiltinFunction(value = "mod_version", effect = com.elfmcys.ysm.api.molang.MolangEffect.CONTEXT, minArgs = 1,
         maxArgs = 1)
     public String modVersion(MolangContextView<Entity> context, String modId) {
-        var mods = net.minecraftforge.fml.ModList.get();
-        var container = mods == null ? null : mods.getModContainerById(modId).orElse(null);
-        return container == null ? "" : net.minecraftforge.common.util.MavenVersionStringHelper
-            .artifactVersionToString(container.getModInfo().getVersion());
+        // PORT(26.3-fabric): Fabric metadata version string replaces Forge artifactVersionToString.
+        return com.elfmcys.ysm.platform.Platform.modVersion(modId).orElse("");
     }
 
     private float physics(String name, float value, boolean first, float[] args) {

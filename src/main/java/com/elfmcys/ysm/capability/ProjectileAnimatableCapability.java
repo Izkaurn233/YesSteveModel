@@ -5,11 +5,11 @@ import com.elfmcys.ysm.model.domain.Hash256;
 import com.elfmcys.ysm.geckolib3.model.AnimatedGeoModel;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.Nullable;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class ProjectileAnimatableCapability extends CustomProjectileEntity {
     private @Nullable Int2FloatOpenHashMap roamingValues;
 

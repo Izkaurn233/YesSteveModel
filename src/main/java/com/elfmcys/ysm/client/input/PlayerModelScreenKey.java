@@ -1,5 +1,7 @@
 package com.elfmcys.ysm.client.input;
 
+import com.elfmcys.ysm.platform.input.YsmKeyMapping;
+import net.minecraft.client.input.KeyEvent;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.client.gui.ConfigScreen;
 import com.elfmcys.ysm.client.gui.DisclaimerScreen;
@@ -11,38 +13,28 @@ import com.elfmcys.ysm.util.InputCheckUtil;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class PlayerModelScreenKey {
     public static final KeyMapping PLAYER_MODEL_KEY =
-        new KeyMapping("key.yes_steve_model.player_model.desc", KeyConflictContext.IN_GAME, KeyModifier.ALT,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Y, "key.category.yes_steve_model");
+        new YsmKeyMapping("key.yes_steve_model.player_model.desc", YsmKeyMapping.Modifier.ALT, InputConstants.KEY_Y);
 
-    @SubscribeEvent
-    public static void onKeyboardInput(InputEvent.Key event) {
+    public static void onKeyboardInput(KeyEvent event, int action) {
         if (!InputCheckUtil.isInGame()) {
             return;
         }
-        if (event.getAction() == GLFW.GLFW_PRESS && InputCheckUtil.keyIsMatch(event, PLAYER_MODEL_KEY)) {
+        if (action == InputConstants.PRESS && InputCheckUtil.keyIsMatch(event, PLAYER_MODEL_KEY)) {
             if (!YesSteveModel.isAvailable()) {
                 YesSteveModel.sendUnavailableMessage();
                 return;
             }
             if (NetworkHandler.isRemoteChannelPresent() && !ServerConfig.CAN_SWITCH_MODEL.get()) {
-                Minecraft.getInstance().setScreen(new ConfigScreen(null));
+                Minecraft.getInstance().gui.setScreen(new ConfigScreen(null));
                 return;
             }
             if (ClientConfig.DISCLAIMER_SHOW.get()) {
-                Minecraft.getInstance().setScreen(new DisclaimerScreen());
+                Minecraft.getInstance().gui.setScreen(new DisclaimerScreen());
             } else {
-                Minecraft.getInstance().setScreen(new PlayerModelScreen());
+                Minecraft.getInstance().gui.setScreen(new PlayerModelScreen());
             }
         }
     }

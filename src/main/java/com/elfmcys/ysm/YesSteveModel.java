@@ -1,5 +1,6 @@
 package com.elfmcys.ysm;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.api.internal.event.ExtensionEventHandlerLoader;
 import com.elfmcys.ysm.config.ClientConfig;
 import com.elfmcys.ysm.config.ServerConfig;
@@ -7,8 +8,8 @@ import com.elfmcys.ysm.init.ModSounds;
 import com.elfmcys.ysm.util.NativeLibUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModContainer;
@@ -17,7 +18,6 @@ import net.minecraftforge.fml.ModLoadingWarning;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,7 +52,7 @@ public class YesSteveModel {
     private static void initConfig() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.init());
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.init());
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (Platform.isClient()) {
             ModSounds.SOUNDS.register(FMLJavaModLoadingContext.get().getModEventBus());
         }
     }
@@ -69,7 +69,7 @@ public class YesSteveModel {
         return NativeLibUtil.isMobilePlatform();
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public static void sendUnavailableMessage() {
         var player = Minecraft.getInstance().player;
         if (player != null) {

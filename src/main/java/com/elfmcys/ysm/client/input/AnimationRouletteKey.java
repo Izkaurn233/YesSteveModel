@@ -1,5 +1,7 @@
 package com.elfmcys.ysm.client.input;
 
+import com.elfmcys.ysm.platform.input.YsmKeyMapping;
+import net.minecraft.client.input.KeyEvent;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.PlayerAnimatableCapabilityProvider;
 import com.elfmcys.ysm.client.gui.AnimationRouletteScreen;
@@ -9,45 +11,34 @@ import com.elfmcys.ysm.util.InputCheckUtil;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class AnimationRouletteKey {
     public static final KeyMapping ANIMATION_ROULETTE_KEY =
-        new KeyMapping("key.yes_steve_model.animation_roulette.desc", KeyConflictContext.IN_GAME, KeyModifier.NONE,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, "key.category.yes_steve_model");
+        new YsmKeyMapping("key.yes_steve_model.animation_roulette.desc", YsmKeyMapping.Modifier.NONE, InputConstants.KEY_Z);
 
     public static final KeyMapping LOCK_ROULETTE_KEY =
-        new KeyMapping("key.yes_steve_model.lock_roulette.desc", KeyConflictContext.IN_GAME, KeyModifier.ALT,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_L, "key.category.yes_steve_model");
+        new YsmKeyMapping("key.yes_steve_model.lock_roulette.desc", YsmKeyMapping.Modifier.ALT, InputConstants.KEY_L);
 
-    @SubscribeEvent
-    public static void onKeyboardInput(InputEvent.Key event) {
+    public static void onKeyboardInput(KeyEvent event, int action) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
         if (!InputCheckUtil.isInGame()) {
             return;
         }
-        if (event.getAction() == GLFW.GLFW_PRESS && InputCheckUtil.keyIsMatch(event, ANIMATION_ROULETTE_KEY)
+        if (action == InputConstants.PRESS && InputCheckUtil.keyIsMatch(event, ANIMATION_ROULETTE_KEY)
             && (!NetworkHandler.isRemoteChannelPresent() || ServerConfig.CAN_SWITCH_MODEL.get())) {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.getCapability(PlayerAnimatableCapabilityProvider.CAP).ifPresent(cap -> {
                     String modelId = cap.getModelId();
                     var model = cap.getModelRenderTarget();
                     if (model != null && !model.info().getExtraAnimations().isEmpty()) {
-                        if (Minecraft.getInstance().screen == null) {
-                            Minecraft.getInstance().setScreen(new AnimationRouletteScreen(modelId, model, cap));
+                        if (Minecraft.getInstance().gui.screen() == null) {
+                            Minecraft.getInstance().gui.setScreen(new AnimationRouletteScreen(modelId, model, cap));
                             return;
                         }
-                        if (Minecraft.getInstance().screen instanceof AnimationRouletteScreen) {
-                            Minecraft.getInstance().setScreen(null);
+                        if (Minecraft.getInstance().gui.screen() instanceof AnimationRouletteScreen) {
+                            Minecraft.getInstance().gui.setScreen(null);
                         }
                     }
                 });

@@ -1,10 +1,9 @@
 package com.elfmcys.ysm.mixin.plugin;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.client.compat.create.CreateCompat;
 import com.elfmcys.ysm.client.compat.parcool.ParCoolCompat;
 import com.google.common.collect.Lists;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -36,10 +35,10 @@ public class MixinTweaker implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (Platform.isClient()) {
             List<String> list = Lists.newArrayList();
 
-            if (!FMLEnvironment.production) {
+            if (Platform.isDevelopment()) {
                 list.add("client.TextureManagerMixin");
             }
 

@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.elfmcys.ysm.config.ExtraPlayerScreenConfig;
 import com.elfmcys.ysm.util.RenderUtil;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,7 +10,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FormattedCharSequence;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class ExtraPlayerConfigScreen extends Screen {
     private boolean isChangePos = false;
     private boolean isChangeScale = false;
     private int controlSize = 5;
-    private int yawChangeButton = GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+    private int yawChangeButton = InputConstants.MOUSE_BUTTON_RIGHT;
 
     public ExtraPlayerConfigScreen() {
         super(Component.literal("YSM Extra Player Render Config GUI"));
@@ -32,7 +32,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         this.yawOffset = ExtraPlayerScreenConfig.PLAYER_YAW_OFFSET.get().floatValue();
         if (AndroidCompat.isAndroid()) {
             this.controlSize = 16;
-            this.yawChangeButton = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+            this.yawChangeButton = InputConstants.MOUSE_BUTTON_LEFT;
         }
     }
 
@@ -113,14 +113,14 @@ public class ExtraPlayerConfigScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean xIn = this.posX - this.controlSize < mouseX && mouseX < this.posX + this.controlSize;
         boolean yIn = this.posY - this.controlSize < mouseY && mouseY < this.posY + this.controlSize;
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && xIn && yIn) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && xIn && yIn) {
             this.isChangePos = true;
         }
         int endX = (int)(this.posX + this.scale * 1);
         int endY = (int)(this.posY + this.scale * 2);
         boolean xIn2 = endX - this.controlSize < mouseX && mouseX < endX + this.controlSize;
         boolean yIn2 = endY - this.controlSize < mouseY && mouseY < endY + this.controlSize;
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && xIn2 && yIn2) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && xIn2 && yIn2) {
             this.isChangeScale = true;
         }
         return super.mouseClicked(mouseX, mouseY, button);

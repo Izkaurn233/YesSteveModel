@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.util;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.natives.NativeRuntime;
 import com.sun.jna.NativeLibrary;
@@ -10,7 +11,6 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.ModLoadingStage;
 import net.minecraftforge.fml.ModLoadingWarning;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -137,7 +137,7 @@ public final class NativeLibUtil {
      */
     @Nullable
     private static String getDevLibraryPath() {
-        if (!FMLEnvironment.production) {
+        if (Platform.isDevelopment()) {
             String libPath = System.getenv(DEV_LIB_ENV);
             return StringUtil.isNullOrEmpty(libPath) ? null : libPath;
         }

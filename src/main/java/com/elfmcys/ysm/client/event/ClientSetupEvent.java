@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.client.event;
 
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.client.ClientStartup;
 import com.elfmcys.ysm.model.ModelRuntime;
@@ -11,39 +12,34 @@ import com.elfmcys.ysm.client.input.DebugAnimationKey;
 import com.elfmcys.ysm.client.input.ExtraAnimationKey;
 import com.elfmcys.ysm.client.input.ExtraPlayerConfigKey;
 import com.elfmcys.ysm.client.input.PlayerModelScreenKey;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 import static net.minecraftforge.client.gui.overlay.VanillaGuiOverlay.DEBUG_TEXT;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+// PORT(26.3-fabric): invoked from YesSteveModelFabricClient instead of the Forge mod bus.
 public class ClientSetupEvent {
-    @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
+    // Forge ran this through FMLClientSetupEvent.enqueueWork on the main thread; Fabric client init is on the main thread too.
+    public static void onClientSetup() {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
 
-        event.enqueueWork(() -> ClientStartup.start(ModelRuntime.system()));
+        ClientStartup.start(ModelRuntime.system());
     }
 
-    @SubscribeEvent
-    public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-        event.register(PlayerModelScreenKey.PLAYER_MODEL_KEY);
+    public static void onRegisterKeyMappings() {
+        KeyMappingHelper.registerKeyMapping(PlayerModelScreenKey.PLAYER_MODEL_KEY);
 
         if (!YesSteveModel.isAvailable()) {
             return;
         }
 
-        event.register(AnimationRouletteKey.ANIMATION_ROULETTE_KEY);
-        event.register(AnimationRouletteKey.LOCK_ROULETTE_KEY);
-        event.register(DebugAnimationKey.DEBUG_ANIMATION_KEY);
-        event.register(ExtraPlayerConfigKey.EXTRA_PLAYER_RENDER_KEY);
-        ExtraAnimationKey.registerKeyBinding(event);
+        KeyMappingHelper.registerKeyMapping(AnimationRouletteKey.ANIMATION_ROULETTE_KEY);
+        KeyMappingHelper.registerKeyMapping(AnimationRouletteKey.LOCK_ROULETTE_KEY);
+        KeyMappingHelper.registerKeyMapping(DebugAnimationKey.DEBUG_ANIMATION_KEY);
+        KeyMappingHelper.registerKeyMapping(ExtraPlayerConfigKey.EXTRA_PLAYER_RENDER_KEY);
+        ExtraAnimationKey.registerKeyBinding();
     }
 
     @SubscribeEvent

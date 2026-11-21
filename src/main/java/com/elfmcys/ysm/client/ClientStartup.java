@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.client;
 
+import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.client.animation.AnimationRegister;
 import com.elfmcys.ysm.client.compat.ARCompat;
@@ -38,7 +39,6 @@ import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingStage;
 import net.minecraftforge.fml.ModLoadingWarning;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.LoadingModList;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -55,7 +55,7 @@ public final class ClientStartup {
         var versions = new TreeMap<String, String>();
         mods.getMods().forEach(mod -> versions.put(mod.getModId(), mod.getVersion().toString()));
         var builtinAdmission = new OptionalCapabilityAdmission(mods::isLoaded, versions,
-            ClientStartup.class.getClassLoader(), !FMLEnvironment.production);
+            ClientStartup.class.getClassLoader(), Platform.isDevelopment());
 
         builtinAdmission.initialize(OptionalCapability.CURIOS, CuriosCompat::init, CuriosCompat::isInstalled);
         FirstPersonCompat.init();

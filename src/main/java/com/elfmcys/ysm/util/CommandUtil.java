@@ -1,13 +1,12 @@
 package com.elfmcys.ysm.util;
 
+import com.elfmcys.ysm.platform.Platform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,7 @@ public class CommandUtil {
 
     // 是否为单人模式，或联机模式下的房主
     public static boolean isLocalPlayer(Entity player) {
-        return player != null && FMLEnvironment.dist == Dist.CLIENT
+        return player != null && Platform.isClient()
             && player.getUUID().equals(Minecraft.getInstance().getUser().getGameProfile().getId());
     }
 

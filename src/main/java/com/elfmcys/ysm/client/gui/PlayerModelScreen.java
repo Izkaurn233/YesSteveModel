@@ -1,5 +1,6 @@
 package com.elfmcys.ysm.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.AuthModelsCapabilityProvider;
 import com.elfmcys.ysm.capability.PlayerAnimatableCapabilityProvider;
@@ -54,7 +55,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraftforge.fml.ModList;
 import org.apache.commons.lang3.StringUtils;
-import org.lwjgl.glfw.GLFW;
 import org.jetbrains.annotations.Nullable;
 
 public class PlayerModelScreen extends ModelScreen {
@@ -160,7 +160,7 @@ public class PlayerModelScreen extends ModelScreen {
 
     protected boolean showTextureScreen(PlayerTextureScreen screen) {
         showScreen(screen);
-        return Minecraft.getInstance().screen == screen;
+        return Minecraft.getInstance().gui.screen() == screen;
     }
 
     @Override
@@ -481,7 +481,7 @@ public class PlayerModelScreen extends ModelScreen {
             textField.setFocused(false);
         }
         var handled = super.mouseClicked(mouseX, mouseY, button);
-        if (!handled && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && !browser.currentPack().isBlank()) {
+        if (!handled && button == InputConstants.MOUSE_BUTTON_RIGHT && !browser.currentPack().isBlank()) {
             getMinecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
             backToParent();
             return true;
@@ -516,8 +516,8 @@ public class PlayerModelScreen extends ModelScreen {
             }
             return true;
         }
-        var handled = textField.isFocused() && textField.isVisible() && keyCode != GLFW.GLFW_KEY_ESCAPE
-            && keyCode != GLFW.GLFW_KEY_TAB || super.keyPressed(keyCode, scanCode, modifiers);
+        var handled = textField.isFocused() && textField.isVisible() && keyCode != InputConstants.KEY_ESCAPE
+            && keyCode != InputConstants.KEY_TAB || super.keyPressed(keyCode, scanCode, modifiers);
         updateKeyboardPointer();
         return handled;
     }

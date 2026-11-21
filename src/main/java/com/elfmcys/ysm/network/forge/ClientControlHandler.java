@@ -14,14 +14,14 @@ import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraftforge.network.NetworkEvent;
 
 import static com.elfmcys.ysm.network.forge.ControlHandler.*;
 
 /** Keeps client capability types out of common handler verification on dedicated servers. */
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 final class ClientControlHandler {
     private ClientControlHandler() {}
 
