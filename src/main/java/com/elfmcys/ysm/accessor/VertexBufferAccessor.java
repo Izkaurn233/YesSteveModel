@@ -1,42 +1,32 @@
 package com.elfmcys.ysm.accessor;
 
-import com.elfmcys.ysm.buffer.BorrowedNativeBuffer;
-import com.elfmcys.ysm.buffer.annotation.Borrowed;
-import com.mojang.blaze3d.vertex.VertexFormat;
-
 /**
- * Borrows and commits a contiguous range in the host builder's current vertex layout.
+ * Bulk append of complete vertices in the host builder's entity layout.
  *
- * <p>Execution: the host render owner serializes reserve, synchronous write, and advance.
- * No builder mutation, reserve, resize, reset, or release may overlap that write.
+ * <p>PORT(26.3-fabric): 26.3 rebuilt {@code BufferBuilder} around {@code ByteBufferBuilder.reserve} and raw
+ * pointers, so the 1.20.1 reserve/advance borrow (native writing into the builder's ByteBuffer) no longer applies.
+ * Native output is now produced into YSM-owned memory first, while the model state is still borrowed, and copied
+ * in one block when the host hands over the consumer (see {@code NativeRenderer}).
  *
- * <p>Ownership: returned ranges retain an anchor, not ownership of the host allocation.
- * Advance or abandonment ends the borrow; anchor reachability does not extend that window.
+ * <p>Execution: render thread only. No other write to the same builder may interleave with an append.
  *
- * <p>Seam: provides the reserve/commit boundary required by the
+ * <p>Seam: provides the host side of the
  * [frame borrow contract](docs/architecture/native-runtime/implementation/jni-and-memory.md#帧内借用).
  */
 public interface VertexBufferAccessor {
-    /** @return whether this consumer currently exposes the remaining accessor operations */
-    boolean ysm$ok();
-
-    /** @return the current builder layout; the caller keeps that layout unchanged during a borrow */
-    VertexFormat ysm$vertexFormat();
+    /**
+     * Whether {@link #ysm$appendEntityVertices} may be used: the builder is building, uses
+     * {@code DefaultVertexFormat.ENTITY} (36-byte vertices) and is not a LINES builder (LINES duplicates vertices).
+     */
+    boolean ysm$acceptsEntityVertices();
 
     /**
-     * <p>Requires: ysm$ok() holds and maxVertexCount is nonnegative.
-     * The implementation grows storage before publishing the address and does not advance the builder.
+     * Appends {@code vertexCount} complete vertices that start at native address {@code source}, in the 26.3
+     * {@code DefaultVertexFormat.ENTITY} layout: position 3xf32, color RGBA8, UV0 2xf32, UV1 (overlay) 2xs16,
+     * UV2 (light) 2xs16, normal RGBA8_SNORM.
      *
-     * @return a writable range for maxVertexCount vertices in the current layout
+     * <p>Requires: {@link #ysm$acceptsEntityVertices()} holds and the source range is readable for
+     * {@code vertexCount * 36} bytes. Ensures: the builder state equals having added those vertices one by one.
      */
-    @Borrowed
-    BorrowedNativeBuffer ysm$reserve(int maxVertexCount);
-
-    /**
-     * <p>Requires: the synchronous writer succeeded, all workers finished, and actualVertexCount
-     * is in [0, the reserved count]. The range and builder layout are unchanged since reserve.
-     *
-     * <p>Ensures: commits that vertex count and ends the borrow. Failed writes are abandoned without advance.
-     */
-    void ysm$advance(int actualVertexCount);
+    void ysm$appendEntityVertices(long source, int vertexCount);
 }

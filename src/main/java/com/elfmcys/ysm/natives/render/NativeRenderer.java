@@ -5,6 +5,7 @@ import com.elfmcys.ysm.buffer.NativeBuffer;
 import com.elfmcys.ysm.buffer.annotation.Aligned;
 import com.elfmcys.ysm.buffer.annotation.Borrowed;
 import com.elfmcys.ysm.client.compat.IrisCompat;
+import com.elfmcys.ysm.config.ClientConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -44,6 +45,47 @@ public class NativeRenderer {
             return renderEmpty(modelState);
         }
 
+        if (ClientConfig.USE_COMPATIBILITY_RENDERER.get()) {
+            return submitCompatibility(collector, renderType, poseStack, camera, modelState, vertexCount, light,
+                overlay, color, contextType);
+        }
+
+        // PORT(26.3-fabric): native writes the 36-byte VANILLA layout (identical to 26.3 DefaultVertexFormat.ENTITY)
+        // into frame-scoped memory now, while the model state is borrowed; the host callback later copies it into
+        // the BufferBuilder in one block (VertexBufferAccessor) instead of replaying each vertex through Java.
+        var allocation = NativeVertexArena.allocate(Math.multiplyExact(vertexCount, VanillaVertexReader.STRIDE));
+        var region = allocation.region();
+        var matrices = getMatBuffer(poseStack.last(), camera.viewRotationMatrix, camera.projectionMatrix);
+        var result = 0;
+        try {
+            result = nRender(region.nio(), region.size(), matrices.ptr(), modelState.get(), vertexCount,
+                packLightAndOverlay(light, overlay), packColor(color), packFlags(VertexFormatType.VANILLA, contextType),
+                IrisCompat.getEntityId());
+        } finally {
+            if (result != SUCCESS && result != OUTPUT_REJECTED) {
+                modelState.invalidate();
+            }
+            Reference.reachabilityFence(region);
+            Reference.reachabilityFence(matrices);
+            Reference.reachabilityFence(modelState);
+        }
+        if (result != SUCCESS) {
+            return false;
+        }
+        collector.submitCustomGeometry(poseStack, renderType,
+            (pose, consumer) -> VanillaVertexReader.write(consumer, allocation, vertexCount));
+        return true;
+    }
+
+    /** Begins a frame for the vertex arena; called at the head of {@code Minecraft.renderFrame}. */
+    public static void beginFrame() {
+        NativeVertexArena.beginFrame();
+    }
+
+    /** {@code UseCompatibilityRenderer}: the int[] carrier and per-vertex Java replay, as before. */
+    private static boolean submitCompatibility(SubmitNodeCollector collector, RenderType renderType,
+        PoseStack poseStack, CameraRenderState camera, NativeModelState modelState, int vertexCount, int light,
+        int overlay, int color, RenderContextType contextType) {
         var vertices = FallbackVertexWriter.allocateVertexData(vertexCount);
         var matrices = getMatBuffer(poseStack.last(), camera.viewRotationMatrix, camera.projectionMatrix);
         var result = 0;

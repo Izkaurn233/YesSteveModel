@@ -179,9 +179,27 @@ public final class CustomGuiPlayerEntity extends CustomPlayerEntity implements I
     }
 
     public static final class FakePlayer extends AbstractClientPlayer {
+        /**
+         * PORT(26.3-fabric): 26.3 Entity.getId() throws while the id is still 0 ("before ID assignment"), and preview
+         * players are never added to a level, so they never get one. Vanilla renderers read the id while extracting
+         * render state (ItemModelResolver.updateForLiving). Previews take negative ids, which never collide with
+         * server-assigned (positive) ids; 0 is skipped.
+         */
+        private static final java.util.concurrent.atomic.AtomicInteger PREVIEW_IDS =
+            new java.util.concurrent.atomic.AtomicInteger();
+
         public FakePlayer() {
             super(Objects.requireNonNull(Minecraft.getInstance().level, "A preview requires a client level"),
                 createRandomGameProfile());
+            setId(nextPreviewId());
+        }
+
+        private static int nextPreviewId() {
+            int id;
+            do {
+                id = PREVIEW_IDS.decrementAndGet();
+            } while (id == 0);
+            return id;
         }
 
         private static GameProfile createRandomGameProfile() {

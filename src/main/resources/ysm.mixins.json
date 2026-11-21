@@ -9,6 +9,7 @@
   },
   "client": [
     "client.AvatarRendererAccessor",
+    "client.BufferBuilderMixin",
     "client.ClientLevelUnloadMixin",
     "client.ClientPacketListenerRespawnMixin",
     "client.EntityRenderDispatcherMixin",
@@ -33,7 +34,8 @@
     "client.ParrotOnShoulderLayerAccessor",
     "client.RenderTypeInvoker",
     "client.ThrowableItemProjectileAccessor",
-    "client.LevelRendererMixin"
+    "client.LevelRendererMixin",
+    "client.MinecraftFrameMixin"
   ],
   "mixins": [
     "accessor.ConnectionAccessor",
