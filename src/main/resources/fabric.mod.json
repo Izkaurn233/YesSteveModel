@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "ysm",
+  "version": "${mod_version}",
+  "name": "Yes Steve Model",
+  "description": "A mod based on GeckoLib that modifies the player model",
+  "authors": ["YS Group", "TartaricAcid", "TomatoPuddin", "AryochiL"],
+  "contributors": ["bernie-g (GeckoLib)", "fadookie (mclib)", "TT432", "SQwatermark"],
+  "contact": {
+    "homepage": "https://ysm.cfpa.team/",
+    "sources": "https://github.com/YesSteveModel/YesSteveModel",
+    "issues": "https://github.com/YesSteveModel/YSM-Wiki-Issues/issues"
+  },
+  "license": "Apache-2.0",
+  "icon": "ysm.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.elfmcys.ysm.fabric.YesSteveModelFabric"],
+    "client": ["com.elfmcys.ysm.fabric.client.YesSteveModelFabricClient"]
+  },
+  "mixins": ["ysm.mixins.json"],
+  "accessWidener": "ysm.accesswidener",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

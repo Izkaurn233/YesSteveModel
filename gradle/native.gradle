@@ -63,8 +63,13 @@ ext.ysmNativeLibraryPath = nativeLibraryPath
 def nativeLibraryFile = layout.file(nativeLibraryPath.map { path -> new File(path) })
 ext.ysmNativeLibraryFile = nativeLibraryFile
 
-legacyForge.runs.configureEach {
-    environment.put(ysmNativeEnvironment, nativeLibraryPath)
+// Native is optional for compilation; runs only receive it when it resolves.
+loom.runs.configureEach { run ->
+    try {
+        run.environmentVariable(ysmNativeEnvironment, nativeLibraryPath.get())
+    } catch (GradleException ignored) {
+        logger.info("YSM native library not configured; dev runs start without it")
+    }
 }
 
 tasks.withType(Test).configureEach {
