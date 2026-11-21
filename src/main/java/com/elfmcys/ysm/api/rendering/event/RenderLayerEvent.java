@@ -1,14 +1,11 @@
 package com.elfmcys.ysm.api.rendering.event;
 
+import com.elfmcys.ysm.api.event.CancellableEvent;
 import com.elfmcys.ysm.geckolib3.geo.GeoRenderData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.IModBusEvent;
 
-@Cancelable
-public class RenderLayerEvent extends Event implements IModBusEvent {
+public class RenderLayerEvent extends CancellableEvent {
     private final Object target;
     private final GeoRenderData renderData;
     private final PoseStack poseStack;

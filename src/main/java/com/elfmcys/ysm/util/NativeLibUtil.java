@@ -10,7 +10,6 @@ import net.minecraft.util.StringUtil;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.ModLoadingStage;
-import net.minecraftforge.fml.ModLoadingWarning;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -466,11 +465,6 @@ public final class NativeLibUtil {
     }
 
     @SuppressWarnings("removal")
-    public static ModLoadingWarning getUnavailableWarning() {
-        return new ModLoadingWarning(ModLoadingContext.get().getActiveContainer().getModInfo(),
-            ModLoadingStage.SIDED_SETUP, UNSUPPORTED_MSG_KEY, UNSUPPORTED_MSG_CTX);
-    }
-
     /**
      * 平台配置信息
      *

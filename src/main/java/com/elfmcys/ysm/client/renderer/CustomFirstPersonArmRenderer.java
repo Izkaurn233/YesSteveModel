@@ -49,7 +49,7 @@ public class CustomFirstPersonArmRenderer {
             }
             var consumed = owner.renderPart(prepared, () -> {
                 var renderEvent = new SpecialPlayerRenderEvent(player, cap, owner.getInstalledModelId());
-                if (MinecraftForge.EVENT_BUS.post(renderEvent))
+                if (com.elfmcys.ysm.YesSteveModel.postEvent(renderEvent))
                     return null;
                 if (owner != armEntity || !canRender(player, cap) || !owner.canConsume(prepared))
                     return null;

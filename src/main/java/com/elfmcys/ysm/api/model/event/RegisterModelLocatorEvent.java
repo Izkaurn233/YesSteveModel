@@ -1,13 +1,12 @@
 package com.elfmcys.ysm.api.model.event;
 
+import com.elfmcys.ysm.api.event.Event;
 import com.elfmcys.ysm.api.model.ModelKind;
 import com.elfmcys.ysm.geckolib3.geo.render.built.GeoLocator;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.IModBusEvent;
 
 import java.util.function.Function;
 
-public class RegisterModelLocatorEvent extends Event implements IModBusEvent {
+public class RegisterModelLocatorEvent implements Event {
     private final ModelKind kind;
     private final Function<String, GeoLocator> registerFunction;
 

@@ -1,21 +1,19 @@
 package com.elfmcys.ysm.event.api;
 
+import com.elfmcys.ysm.api.event.CancellableEvent;
 import com.elfmcys.ysm.client.entity.CustomPlayerEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
 import org.jetbrains.annotations.Nullable;
 
-@Cancelable
-public class SpecialPlayerRenderEvent extends Event {
+public class SpecialPlayerRenderEvent extends CancellableEvent {
     private final Player player;
     private final CustomPlayerEntity customPlayer;
     private final String modelId;
     @Nullable
     private ResourceLocation textureLocationOverride;
 
-    // 没这个方法 forge 会报错
+    // Forge required a no-arg constructor; kept for source compatibility.
     public SpecialPlayerRenderEvent() {
         player = null;
         customPlayer = null;

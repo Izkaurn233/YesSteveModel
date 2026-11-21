@@ -2,18 +2,30 @@ package com.elfmcys.ysm.api.internal.event;
 
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.api.annotation.YsmEventHandler;
-import java.lang.annotation.ElementType;
+import com.elfmcys.ysm.api.event.EventManager;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.CustomValue;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
-import net.minecraftforge.forgespi.language.ModFileScanData;
+import java.util.TreeSet;
 
 /**
- * Internal Forge discovery and registration bridge for {@link YsmEventHandler}.
+ * Internal discovery and registration bridge for {@link YsmEventHandler}.
  *
- * <p>Execution: discovery and registration run in the load-complete listener's invocation window.
- * Registration does not grant render-thread access to constructors or later callbacks.
+ * <p>Discovery (PORT(26.3-fabric)): Forge found {@code @YsmEventHandler} types in its annotation scan data without
+ * loading them. Fabric has no such scan, so an extension lists its handler binary names in {@code fabric.mod.json}:
+ * <pre>{@code
+ * "custom": { "ysm:event_handlers": ["com.example.MyYsmHandler"] }
+ * }</pre>
+ * Reading metadata loads no class, so the generated checker still runs before any handler class is initialized.
+ * The {@code @YsmEventHandler} annotation stays on the class and still drives the annotation processor's checker.
+ *
+ * <p>Execution: Forge registered in {@code FMLLoadCompleteEvent}; Fabric has no load-complete phase, so
+ * {@link #registerAll(EventManager)} runs once from the main entrypoint. That is earlier than Forge, so handlers
+ * are present before client setup posts the locator events.
  *
  * <p>Failure: qualification failures are isolated per handler. Registration exceptions are logged,
  * but this bridge currently does not undo any listeners installed before register throws.
@@ -22,22 +34,16 @@ import net.minecraftforge.forgespi.language.ModFileScanData;
  * [partial-registration rollback gap](docs/status/known-issues/integration.md#可选-handler-注册回滚).
  */
 public final class ExtensionEventHandlerLoader {
-    private static final String ANNOTATION_NAME = YsmEventHandler.class.getName();
+    /** {@code fabric.mod.json} custom key holding an array of {@code @YsmEventHandler} binary class names. */
+    public static final String METADATA_KEY = "ysm:event_handlers";
 
     private ExtensionEventHandlerLoader() {}
 
-    /**
-     * Attaches one load-complete registration callback to the supplied bus. The bootstrap caller invokes
-     * this once per intended bus; this method does not deduplicate repeated attachment or own bus shutdown.
-     */
-    public static void attach(IEventBus eventBus) {
-        eventBus.addListener((FMLLoadCompleteEvent event) -> registerAll(eventBus));
-    }
-
-    private static void registerAll(IEventBus eventBus) {
+    /** Discovers every declared handler and registers the qualified ones on {@code events}. Call once. */
+    public static void registerAll(EventManager events) {
         List<String> handlerNames;
         try {
-            handlerNames = discoverHandlerNames();
+            handlerNames = discoverHandlerNames(FabricLoader.getInstance().getAllMods());
         } catch (RuntimeException | LinkageError exception) {
             YesSteveModel.LOGGER.error("Failed to discover @YsmEventHandler classes", exception);
             return;
@@ -48,23 +54,37 @@ public final class ExtensionEventHandlerLoader {
             loader = ClassLoader.getSystemClassLoader();
         }
         for (String handlerName : handlerNames) {
-            registerOne(eventBus, handlerName, loader);
+            registerOne(events, handlerName, loader);
         }
     }
 
-    private static List<String> discoverHandlerNames() {
-        return discoverHandlerNames(ModList.get().getAllScanData());
+    /** Sorted, distinct handler names declared under {@link #METADATA_KEY}; malformed entries are logged and skipped. */
+    static List<String> discoverHandlerNames(Collection<ModContainer> mods) {
+        var names = new TreeSet<String>();
+        for (ModContainer mod : mods) {
+            var metadata = mod.getMetadata();
+            if (!metadata.containsCustomValue(METADATA_KEY)) {
+                continue;
+            }
+            CustomValue value = metadata.getCustomValue(METADATA_KEY);
+            if (value.getType() != CustomValue.CvType.ARRAY) {
+                YesSteveModel.LOGGER.error("Mod {}: custom value {} must be an array of class names", metadata.getId(),
+                    METADATA_KEY);
+                continue;
+            }
+            for (CustomValue entry : value.getAsArray()) {
+                if (entry.getType() != CustomValue.CvType.STRING || entry.getAsString().isBlank()) {
+                    YesSteveModel.LOGGER.error("Mod {}: ignoring non-string entry in {}", metadata.getId(),
+                        METADATA_KEY);
+                    continue;
+                }
+                names.add(entry.getAsString().trim());
+            }
+        }
+        return new ArrayList<>(names);
     }
 
-    static List<String> discoverHandlerNames(List<ModFileScanData> scanData) {
-        return scanData.stream().flatMap(fileScan -> fileScan.getAnnotations().stream())
-            .filter(annotation -> annotation.targetType() == ElementType.TYPE)
-            .filter(annotation -> ANNOTATION_NAME.equals(annotation.annotationType().getClassName()))
-            .map(ModFileScanData.AnnotationData::memberName).filter(name -> name != null && !name.isBlank()).distinct()
-            .sorted().toList();
-    }
-
-    private static void registerOne(IEventBus eventBus, String handlerName, ClassLoader loader) {
+    private static void registerOne(EventManager events, String handlerName, ClassLoader loader) {
         ExtensionEventHandlerRegistration.Outcome outcome;
         try {
             outcome = ExtensionEventHandlerRegistration.prepare(handlerName, loader);
@@ -92,7 +112,7 @@ public final class ExtensionEventHandlerLoader {
         }
 
         try {
-            eventBus.register(outcome.handler());
+            events.register(outcome.handler());
             YesSteveModel.LOGGER.info("Registered @YsmEventHandler {}", handlerName);
         } catch (RuntimeException | LinkageError exception) {
             YesSteveModel.LOGGER.error("Failed to register @YsmEventHandler {}; continuing without it", handlerName,

@@ -60,7 +60,7 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<Player, Cust
         var data = cap.update(partialTick);
         return cap.consumePrepared(data, borrowed -> {
             var event = new SpecialPlayerRenderEvent(cap.getEntity(), cap, cap.getInstalledModelId());
-            var suppressed = MinecraftForge.EVENT_BUS.post(event);
+            var suppressed = com.elfmcys.ysm.YesSteveModel.postEvent(event);
             if (!cap.canConsume(borrowed, borrowed.ctx))
                 return false;
             if (suppressed) {
