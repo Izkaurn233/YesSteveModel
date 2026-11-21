@@ -60,8 +60,15 @@ def portExcludedSources = [
         'com/elfmcys/ysm/mixin/client/embeddium/**',
         'com/elfmcys/ysm/mixin/client/parcool/**',
 ]
+// Exclusion is limited to src/main/java so the same-name stubs below are not excluded with it.
+def portMainJavaRoot = file('src/main/java').toPath()
+def portExcludedSpec = new org.gradle.api.tasks.util.PatternSet().include(portExcludedSources).asSpec
 sourceSets.main.java {
-    portExcludedSources.each { exclude it }
+    // Files only: an include-only PatternSet accepts every directory, which would drop the whole tree.
+    exclude { details -> !details.directory && details.file.toPath().startsWith(portMainJavaRoot)
+        && portExcludedSpec.isSatisfiedBy(details) }
+    // Same-name stubs for excluded integrations; each reports its mod as absent.
+    srcDir 'src/port/compat-disabled/java'
 }
 
 loom {

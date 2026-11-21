@@ -172,19 +172,19 @@ public final class ModelInfoCapability {
     }
 
     public void deserializeNBT(CompoundTag tag) {
-        var storedHash = tag.getString("model_hash");
+        var storedHash = tag.getStringOr("model_hash", "");
         try {
             modelId = storedHash.isEmpty() ? null : Hash256.parse(storedHash);
         } catch (IllegalArgumentException invalidHash) {
             modelId = null;
         }
-        selectTexture = tag.getString("select_texture");
+        selectTexture = tag.getStringOr("select_texture", "");
         if (selectTexture.length() > 4 && selectTexture.toLowerCase().endsWith(".png")) {
             selectTexture = selectTexture.substring(0, selectTexture.length() - 4);
         }
-        mandatory = tag.getBoolean("mandatory");
-        ignoreGrants = modelId != null && tag.getBoolean("ignore_grants");
-        disabled = tag.getBoolean("disabled");
-        roamingVariables.deserialize(tag.getCompound("molang_storage"));
+        mandatory = tag.getBooleanOr("mandatory", false);
+        ignoreGrants = modelId != null && tag.getBooleanOr("ignore_grants", false);
+        disabled = tag.getBooleanOr("disabled", false);
+        roamingVariables.deserialize(tag.getCompoundOrEmpty("molang_storage"));
     }
 }

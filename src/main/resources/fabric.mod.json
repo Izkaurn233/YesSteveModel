@@ -26,5 +26,10 @@
     "java": ">=25",
     "fabric-api": "*",
     "forgeconfigapiport": "*"
+  },
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/world/entity/Entity": ["com/elfmcys/ysm/platform/capability/YsmCapabilityHolder"]
+    }
   }
 }

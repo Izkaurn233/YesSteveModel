@@ -4,15 +4,11 @@ import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.PlayerAnimatableCapabilityProvider;
 import com.elfmcys.ysm.network.NetworkHandler;
 import com.elfmcys.ysm.network.forge.ClientProtocolGateway;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.client.player.LocalPlayer;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+// PORT(26.3-fabric): called from ClientPacketListenerRespawnMixin (Forge ClientPlayerNetworkEvent.Clone).
 public class LocalPlayerRespawnEvent {
-    @SubscribeEvent
-    public static void onFire(ClientPlayerNetworkEvent.Clone event) {
+    public static void onFire(LocalPlayer oldPlayer, LocalPlayer newPlayer) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
@@ -21,11 +17,10 @@ public class LocalPlayerRespawnEvent {
             return;
         }
 
-        event.getOldPlayer().reviveCaps();
-        event.getOldPlayer().getCapability(PlayerAnimatableCapabilityProvider.CAP)
-            .ifPresent(oldCap -> event.getNewPlayer().getCapability(PlayerAnimatableCapabilityProvider.CAP)
+        // Forge needed reviveCaps()/invalidateCaps() around this; data attachments stay readable on the old player.
+        oldPlayer.getCapability(PlayerAnimatableCapabilityProvider.CAP)
+            .ifPresent(oldCap -> newPlayer.getCapability(PlayerAnimatableCapabilityProvider.CAP)
                 .ifPresent(newCap -> newCap.moveFrom(oldCap)));
-        event.getOldPlayer().invalidateCaps();
         ClientProtocolGateway.localPlayerCloned();
     }
 }

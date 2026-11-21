@@ -1,20 +1,22 @@
 package com.elfmcys.ysm.capability;
 
-import net.minecraft.core.Direction;
-import net.minecraft.world.entity.Entity;
+import com.elfmcys.ysm.platform.capability.CapKey;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Holder of a client vehicle animatable, initialised on demand by the network layer.
+ * PORT(26.3-fabric): {@link #CAP} is a derived key, present only once {@link #initialize()} has run, as in Forge.
+ */
 @Environment(EnvType.CLIENT)
-public class VehicleAnimatableCapabilityProvider implements ICapabilityProvider {
-    public static Capability<VehicleAnimatableCapability> CAP = CapabilityManager.get(new CapabilityToken<>() {});
+public class VehicleAnimatableCapabilityProvider {
+    public static final CapKey<VehicleAnimatableCapability> CAP = CapKey.derivedKey("vehicle_animatable", entity -> {
+        var lazy = ClientLazyCapabilityProvider.CAP.peek(entity);
+        return lazy == null ? null : lazy.getVehicleAnimatableCapabilityProvider().instance();
+    });
+
     private VehicleAnimatableCapability instance;
     private Entity entity;
 
@@ -30,8 +32,7 @@ public class VehicleAnimatableCapabilityProvider implements ICapabilityProvider 
         return instance;
     }
 
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return CAP.orEmpty(cap, instance == null ? LazyOptional.empty() : LazyOptional.of(() -> instance));
+    public @Nullable VehicleAnimatableCapability instance() {
+        return instance;
     }
 }

@@ -11,6 +11,7 @@
     "client.ArrowEntityAccessor",
     "client.BufferBuilderMixin",
     "client.BufferSourceMixin",
+    "client.ClientPacketListenerRespawnMixin",
     "client.EntityRenderDispatcherMixin",
     "client.FishingHookAccessor",
     "client.GameRendererMixin",
@@ -26,6 +27,7 @@
   ],
   "mixins": [
     "AbstractArrowEntityMixin",
+    "EntityCapabilityHolderMixin",
     "ConnectionMixin",
     "ProjectileEntityMixin",
     "ServerPlayerMixin"

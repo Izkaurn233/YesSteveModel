@@ -1,20 +1,24 @@
 package com.elfmcys.ysm.capability;
 
-import net.minecraft.core.Direction;
-import net.minecraft.world.entity.projectile.Projectile;
+import com.elfmcys.ysm.platform.capability.CapKey;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.entity.projectile.Projectile;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Holder of a client projectile animatable, initialised on demand by the network layer.
+ * PORT(26.3-fabric): {@link #CAP} is a derived key, present only once {@link #initialize()} has run, as in Forge.
+ */
 @Environment(EnvType.CLIENT)
-public class ProjectileAnimatableCapabilityProvider implements ICapabilityProvider {
-    public static Capability<ProjectileAnimatableCapability> CAP = CapabilityManager.get(new CapabilityToken<>() {});
+public class ProjectileAnimatableCapabilityProvider {
+    public static final CapKey<ProjectileAnimatableCapability> CAP = CapKey.derivedKey("projectile_animatable",
+        entity -> {
+            var lazy = ClientLazyCapabilityProvider.CAP.peek(entity);
+            var provider = lazy == null ? null : lazy.getProjectileAnimatableCapabilityProvider();
+            return provider == null ? null : provider.instance();
+        });
+
     private ProjectileAnimatableCapability instance;
     private Projectile projectile;
 
@@ -30,8 +34,7 @@ public class ProjectileAnimatableCapabilityProvider implements ICapabilityProvid
         return this.instance;
     }
 
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return CAP.orEmpty(cap, instance == null ? LazyOptional.empty() : LazyOptional.of(() -> instance));
+    public @Nullable ProjectileAnimatableCapability instance() {
+        return instance;
     }
 }

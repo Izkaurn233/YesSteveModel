@@ -80,7 +80,7 @@ public class PlayerStateTracker extends HumanoidStateTracker<Player> {
                 effects.clear();
             for (var value : effectState.effects()) {
                 var key = Identifier.tryParse(value.effectId());
-                var effect = key == null ? null : BuiltInRegistries.MOB_EFFECT.get(key);
+                var effect = key == null ? null : BuiltInRegistries.MOB_EFFECT.getValue(key);
                 if (effect != null) {
                     if (value.level() == 0)
                         effects.removeByte(effect);
@@ -132,7 +132,8 @@ public class PlayerStateTracker extends HumanoidStateTracker<Player> {
 
     public byte getEffectLevel(MobEffect effect) {
         if (localPlayer) {
-            var instance = entity.getEffect(effect);
+            // PORT(26.3-fabric): LivingEntity.getEffect takes a Holder<MobEffect>.
+            var instance = entity.getEffect(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
             return instance != null ? (byte)(instance.getAmplifier() + 1) : 0;
         } else {
             return effects.getOrDefault(effect, (byte)0);

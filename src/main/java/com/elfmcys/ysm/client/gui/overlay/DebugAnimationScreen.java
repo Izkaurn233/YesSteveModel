@@ -21,7 +21,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
-import net.minecraftforge.common.util.LazyOptional;
+import com.elfmcys.ysm.platform.capability.CapOptional;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -68,7 +68,7 @@ public class DebugAnimationScreen {
     }
 
     public static boolean enable(Entity entity) {
-        LazyOptional<? extends AnimatableEntity<?>> opt;
+        CapOptional<? extends AnimatableEntity<?>> opt;
         if (entity instanceof Player) {
             opt = entity.getCapability(PlayerAnimatableCapabilityProvider.CAP);
         } else if (entity instanceof Projectile) {

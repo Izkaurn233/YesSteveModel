@@ -24,6 +24,7 @@ import net.fabricmc.api.Environment;
 public final class YesSteveModelFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        com.elfmcys.ysm.capability.CapabilityBootstrap.client();
         ClientSetupEvent.onRegisterKeyMappings();
         registerInput();
         registerTicks();

@@ -1,46 +1,16 @@
 package com.elfmcys.ysm.capability;
 
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.core.Direction;
+import com.elfmcys.ysm.platform.capability.CapKey;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
+import net.minecraft.world.entity.player.Player;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+// PORT(26.3-fabric): the Forge ICapabilityProvider is replaced by a transient CapKey (Fabric data attachment).
 @Environment(EnvType.CLIENT)
-public class PlayerAnimatableCapabilityProvider implements ICapabilityProvider {
-    public static Capability<PlayerAnimatableCapability> CAP = CapabilityManager.get(new CapabilityToken<>() {});
-    private PlayerAnimatableCapability instance;
-    private AbstractClientPlayer player;
+public final class PlayerAnimatableCapabilityProvider {
+    public static final CapKey<PlayerAnimatableCapability> CAP = CapKey.transientKey("animatable",
+        CapabilityRules::clientPlayerAnimatable, entity -> new PlayerAnimatableCapability((Player)entity));
 
-    public PlayerAnimatableCapabilityProvider(AbstractClientPlayer player) {
-        this.player = player;
-    }
-
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return getCapability(cap);
-    }
-
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
-        return CAP.orEmpty(cap, LazyOptional.of(this::createCapability));
-    }
-
-    @NotNull
-    private PlayerAnimatableCapability createCapability() {
-        if (instance == null) {
-            this.instance = new PlayerAnimatableCapability(player);
-            player = null;
-        }
-        return instance;
+    private PlayerAnimatableCapabilityProvider() {
     }
 }

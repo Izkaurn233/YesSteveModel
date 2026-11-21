@@ -4,17 +4,14 @@ import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.AuthModelsCapability;
 import com.elfmcys.ysm.capability.AuthModelsCapabilityProvider;
-import com.elfmcys.ysm.capability.ClientLazyCapabilityProvider;
 import com.elfmcys.ysm.capability.ModelInfoCapability;
 import com.elfmcys.ysm.capability.ModelInfoCapabilityProvider;
 import com.elfmcys.ysm.capability.ModelInfoSyncAssembler;
-import com.elfmcys.ysm.capability.PlayerAnimatableCapabilityProvider;
-import com.elfmcys.ysm.capability.ProjectileAnimatableCapabilityProvider;
 import com.elfmcys.ysm.capability.ProjectileModelInfoCapabilityProvider;
 import com.elfmcys.ysm.capability.StarModelsCapability;
 import com.elfmcys.ysm.capability.StarModelsCapabilityProvider;
-import com.elfmcys.ysm.capability.VehicleAnimatableCapabilityProvider;
 import com.elfmcys.ysm.capability.VehicleModelInfoCapabilityProvider;
+import com.elfmcys.ysm.platform.capability.CapOptional;
 import com.elfmcys.ysm.config.ServerConfig;
 import com.elfmcys.ysm.model.ModelRuntime;
 import com.elfmcys.ysm.model.service.ServerModelService;
@@ -26,127 +23,41 @@ import com.elfmcys.ysm.network.protocol.StarredModelSnapshots;
 import com.elfmcys.ysm.proto.network.PlayerStateUpdateProto;
 
 import java.util.Optional;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber
-@SuppressWarnings("removal")
 public final class CapabilityEvent {
-    private static final Identifier MODEL_INFO_CAP = Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "model_id");
-    private static final Identifier PROJECTILE_MODEL_INFO_CAP =
-        Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "projectile_model_id");
-    private static final Identifier VEHICLE_MODEL_INFO_CAP =
-        Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "vehicle_model_id");
-    private static final Identifier AUTH_MODELS_CAP = Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "own_models");
-    private static final Identifier STAR_MODELS_CAP = Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "star_models");
-    private static final Identifier ANIMATABLE_CAP = Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "animatable");
-    private static final Identifier PROJECTILE_ANIMATABLE_CAP =
-        Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "projectile_animatable");
-    private static final Identifier VEHICLE_ANIMATABLE_CAP =
-        Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "vehicle_animatable");
-    private static final Identifier CLIENT_LAZY_CAP = Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "client_lazy");
+    // PORT(26.3-fabric): the Forge AttachCapabilitiesEvent handler is gone; its attach rules live in
+    // capability.CapabilityRules and are evaluated when a capability is first accessed.
 
-    @SubscribeEvent
-    @SuppressWarnings("resource")
-    public static void onAttachCapabilityEvent(AttachCapabilitiesEvent<Entity> event) {
+    /** Registered on Fabric ServerPlayerEvents.COPY_FROM (Forge PlayerEvent.Clone). */
+    public static void onPlayerCloned(ServerPlayer original, ServerPlayer clone) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
+        CapOptional<ModelInfoCapability> oldModelInfoCap = getModelInfoCap(original);
+        CapOptional<AuthModelsCapability> oldAuthModelsCap = getAuthModelsCap(original);
+        CapOptional<StarModelsCapability> oldStarModelsCap = getStarModelsCap(original);
 
-        Entity entity = event.getObject();
-        if (entity instanceof Player player) {
-            if (!entity.level().isClientSide()
-                && !player.getCapability(ModelInfoCapabilityProvider.MODEL_INFO_CAP).isPresent()
-                && !event.getCapabilities().containsKey(MODEL_INFO_CAP)) {
-                event.addCapability(MODEL_INFO_CAP, new ModelInfoCapabilityProvider());
-            }
-            if (!player.getCapability(AuthModelsCapabilityProvider.AUTH_MODELS_CAP).isPresent()
-                && !event.getCapabilities().containsKey(AUTH_MODELS_CAP)) {
-                event.addCapability(AUTH_MODELS_CAP, new AuthModelsCapabilityProvider());
-            }
-            if (!player.getCapability(StarModelsCapabilityProvider.STAR_MODELS_CAP).isPresent()
-                && !event.getCapabilities().containsKey(STAR_MODELS_CAP)) {
-                event.addCapability(STAR_MODELS_CAP, new StarModelsCapabilityProvider());
-            }
-        } else if (entity instanceof Projectile) {
-            if (!entity.level().isClientSide()
-                && !entity.getCapability(ProjectileModelInfoCapabilityProvider.CAP).isPresent()
-                && !event.getCapabilities().containsKey(PROJECTILE_MODEL_INFO_CAP)) {
-                event.addCapability(PROJECTILE_MODEL_INFO_CAP, new ProjectileModelInfoCapabilityProvider());
-            }
-        } else {
-            if (!entity.level().isClientSide()
-                && !entity.getCapability(VehicleModelInfoCapabilityProvider.CAP).isPresent()
-                && !event.getCapabilities().containsKey(VEHICLE_MODEL_INFO_CAP)) {
-                event.addCapability(VEHICLE_MODEL_INFO_CAP, new VehicleModelInfoCapabilityProvider());
-            }
-        }
-
-        if (Platform.isClient() && entity.level().isClientSide()) {
-            // 客户端玩家
-            if (entity instanceof AbstractClientPlayer clientPlayer
-                && !clientPlayer.getCapability(PlayerAnimatableCapabilityProvider.CAP).isPresent()
-                && !event.getCapabilities().containsKey(ANIMATABLE_CAP)) {
-                event.addCapability(ANIMATABLE_CAP, new PlayerAnimatableCapabilityProvider(clientPlayer));
-                return;
-            }
-
-            // 客户端懒加载 cap
-            if (!entity.getCapability(ClientLazyCapabilityProvider.CAP).isPresent()
-                && !event.getCapabilities().containsKey(CLIENT_LAZY_CAP)) {
-                var vehicleAnimatable = new VehicleAnimatableCapabilityProvider(entity);
-                event.addCapability(VEHICLE_ANIMATABLE_CAP, vehicleAnimatable);
-
-                ProjectileAnimatableCapabilityProvider projectileAnimatable = null;
-                if (entity instanceof Projectile projectile) {
-                    projectileAnimatable = new ProjectileAnimatableCapabilityProvider(projectile);
-                    event.addCapability(PROJECTILE_ANIMATABLE_CAP, projectileAnimatable);
-                }
-
-                event.addCapability(CLIENT_LAZY_CAP,
-                    new ClientLazyCapabilityProvider(vehicleAnimatable, projectileAnimatable));
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerCloned(PlayerEvent.Clone event) {
-        if (!YesSteveModel.isAvailable()) {
-            return;
-        }
-        event.getOriginal().reviveCaps();
-        LazyOptional<ModelInfoCapability> oldModelInfoCap = getModelInfoCap(event.getOriginal());
-        LazyOptional<AuthModelsCapability> oldAuthModelsCap = getAuthModelsCap(event.getOriginal());
-        LazyOptional<StarModelsCapability> oldStarModelsCap = getStarModelsCap(event.getOriginal());
-        event.getOriginal().invalidateCaps();
-
-        LazyOptional<ModelInfoCapability> newModelInfoCap = getModelInfoCap(event.getEntity());
-        LazyOptional<AuthModelsCapability> newAuthModelsCap = getAuthModelsCap(event.getEntity());
-        LazyOptional<StarModelsCapability> newStarModelsCap = getStarModelsCap(event.getEntity());
+        CapOptional<ModelInfoCapability> newModelInfoCap = getModelInfoCap(clone);
+        CapOptional<AuthModelsCapability> newAuthModelsCap = getAuthModelsCap(clone);
+        CapOptional<StarModelsCapability> newStarModelsCap = getStarModelsCap(clone);
 
         newModelInfoCap.ifPresent((newModelInfo) -> oldModelInfoCap.ifPresent(newModelInfo::moveFrom));
         newAuthModelsCap.ifPresent((newAuthModels) -> oldAuthModelsCap.ifPresent(newAuthModels::copyFrom));
         newStarModelsCap.ifPresent((newStarModels) -> oldStarModelsCap.ifPresent(newStarModels::copyFrom));
     }
 
-    @SubscribeEvent
-    public static void onTrackingPlayer(PlayerEvent.StartTracking event) {
+    /** Registered on Fabric EntityTrackingEvents.START_TRACKING (Forge PlayerEvent.StartTracking). */
+    public static void onTrackingPlayer(Entity target, ServerPlayer tracker) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
-        if (event.getTarget() instanceof ServerPlayer trackPlayer) {
-            final Player player = event.getEntity();
+        if (target instanceof ServerPlayer trackPlayer) {
+            final Player player = tracker;
             getModelInfoCap(trackPlayer).ifPresent(cap -> {
                 if (!NetworkHandler.isPlayerChannelPresent(trackPlayer) && !cap.isMandatory()) {
                     return;
@@ -155,29 +66,32 @@ public final class CapabilityEvent {
                     PlayerStateHandler.sendToObserver(packet, player);
                 });
             });
-        } else if (event.getTarget() instanceof Projectile projectile) {
+        } else if (target instanceof Projectile projectile) {
             projectile.getCapability(ProjectileModelInfoCapabilityProvider.CAP).ifPresent(cap -> {
                 if (cap.isInitialized()) {
                     NetworkHandler.sendToClientPlayer(MinecraftStateHandler.projectile(projectile.getId(), cap),
-                        event.getEntity());
+                        tracker);
                 }
             });
-        } else if (event.getTarget() != null) {
-            event.getTarget().getCapability(VehicleModelInfoCapabilityProvider.CAP).ifPresent(cap -> {
+        } else if (target != null) {
+            target.getCapability(VehicleModelInfoCapabilityProvider.CAP).ifPresent(cap -> {
                 if (cap.isInitialized()) {
-                    NetworkHandler.sendToClientPlayer(MinecraftStateHandler.vehicle(event.getTarget().getId(), cap),
-                        event.getEntity());
+                    NetworkHandler.sendToClientPlayer(MinecraftStateHandler.vehicle(target.getId(), cap),
+                        tracker);
                 }
             });
         }
     }
 
-    @SubscribeEvent
-    public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
+    /**
+     * Registered on Fabric ServerEntityEvents.ENTITY_LOAD (Forge EntityJoinLevelEvent; only server players matter here).
+     * TODO: not verified: whether ENTITY_LOAD fires for players at login and respawn exactly where Forge did.
+     */
+    public static void onEntityJoinWorld(Entity entity) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
-        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+        if (entity instanceof ServerPlayer serverPlayer) {
             getModelInfoCap(serverPlayer).ifPresent(modelInfoCap -> {
                 if (!NetworkHandler.isPlayerChannelPresent(serverPlayer) && !modelInfoCap.isMandatory()) {
                     modelInfoCap.consumeDirty();
@@ -200,13 +114,12 @@ public final class CapabilityEvent {
     /**
      * 同步客户端服务端数据
      */
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
+    public static void onServerTick(MinecraftServer server) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
-        if (event.phase == TickEvent.Phase.END) {
-            var players = event.getServer().getPlayerList().getPlayers();
+        {
+            var players = server.getPlayerList().getPlayers();
             var lowBandwidthUsage = ServerConfig.LOW_BANDWIDTH_USAGE.get();
             for (ServerPlayer player : players) {
                 getModelInfoCap(player).ifPresent(cap -> {
@@ -269,7 +182,7 @@ public final class CapabilityEvent {
         });
     }
 
-    private static LazyOptional<ModelInfoCapability> getModelInfoCap(Player player) {
+    private static CapOptional<ModelInfoCapability> getModelInfoCap(Player player) {
         return player.getCapability(ModelInfoCapabilityProvider.MODEL_INFO_CAP);
     }
 
@@ -279,11 +192,11 @@ public final class CapabilityEvent {
             .flatMap(snapshot -> ModelInfoSyncAssembler.build(player, capability, snapshot));
     }
 
-    private static LazyOptional<AuthModelsCapability> getAuthModelsCap(Player player) {
+    private static CapOptional<AuthModelsCapability> getAuthModelsCap(Player player) {
         return player.getCapability(AuthModelsCapabilityProvider.AUTH_MODELS_CAP);
     }
 
-    private static LazyOptional<StarModelsCapability> getStarModelsCap(Player player) {
+    private static CapOptional<StarModelsCapability> getStarModelsCap(Player player) {
         return player.getCapability(StarModelsCapabilityProvider.STAR_MODELS_CAP);
     }
 }

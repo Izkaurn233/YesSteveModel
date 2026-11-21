@@ -1,46 +1,15 @@
 package com.elfmcys.ysm.capability;
 
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.ListTag;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.elfmcys.ysm.platform.capability.CapKey;
+import com.elfmcys.ysm.platform.capability.NbtCapabilityCodec;
 
-public class AuthModelsCapabilityProvider implements ICapabilitySerializable<ListTag> {
-    public static Capability<AuthModelsCapability> AUTH_MODELS_CAP = CapabilityManager.get(new CapabilityToken<>() {});
-    private AuthModelsCapability instance = null;
+// PORT(26.3-fabric): the Forge ICapabilitySerializable is replaced by a persistent CapKey (Fabric data attachment).
+public final class AuthModelsCapabilityProvider {
+    public static final CapKey<AuthModelsCapability> AUTH_MODELS_CAP = CapKey.persistentKey("own_models",
+        NbtCapabilityCodec.list(AuthModelsCapability::new, AuthModelsCapability::serializeNBT,
+            AuthModelsCapability::deserializeNBT),
+        CapabilityRules::playerModels, entity -> new AuthModelsCapability());
 
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return AUTH_MODELS_CAP.orEmpty(cap, LazyOptional.of(this::createCapability));
-    }
-
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
-        return getCapability(cap, null);
-    }
-
-    @NotNull
-    private AuthModelsCapability createCapability() {
-        if (instance == null) {
-            this.instance = new AuthModelsCapability();
-        }
-        return instance;
-    }
-
-    @Override
-    public void deserializeNBT(ListTag nbt) {
-        createCapability().deserializeNBT(nbt);
-    }
-
-    @Override
-    public ListTag serializeNBT() {
-        return createCapability().serializeNBT();
+    private AuthModelsCapabilityProvider() {
     }
 }

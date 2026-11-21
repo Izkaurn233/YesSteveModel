@@ -1,46 +1,16 @@
 package com.elfmcys.ysm.capability;
 
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.elfmcys.ysm.platform.capability.CapKey;
+import com.elfmcys.ysm.platform.capability.NbtCapabilityCodec;
 
-public class ModelInfoCapabilityProvider implements ICapabilitySerializable<CompoundTag> {
-    public static Capability<ModelInfoCapability> MODEL_INFO_CAP = CapabilityManager.get(new CapabilityToken<>() {});
-    private ModelInfoCapability instance = null;
+// PORT(26.3-fabric): the Forge ICapabilitySerializable is replaced by a persistent CapKey (Fabric data attachment).
+// The class and field names are kept so existing entity.getCapability(...) call sites compile unchanged.
+public final class ModelInfoCapabilityProvider {
+    public static final CapKey<ModelInfoCapability> MODEL_INFO_CAP = CapKey.persistentKey("model_id",
+        NbtCapabilityCodec.compound(ModelInfoCapability::new, ModelInfoCapability::serializeNBT,
+            ModelInfoCapability::deserializeNBT),
+        CapabilityRules::playerModelInfo, entity -> new ModelInfoCapability());
 
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return MODEL_INFO_CAP.orEmpty(cap, LazyOptional.of(this::createCapability));
-    }
-
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
-        return getCapability(cap, null);
-    }
-
-    @NotNull
-    private ModelInfoCapability createCapability() {
-        if (instance == null) {
-            this.instance = new ModelInfoCapability();
-        }
-        return instance;
-    }
-
-    @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        createCapability().deserializeNBT(nbt);
-    }
-
-    @Override
-    public CompoundTag serializeNBT() {
-        return createCapability().serializeNBT();
+    private ModelInfoCapabilityProvider() {
     }
 }

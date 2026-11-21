@@ -163,7 +163,7 @@ public final class ServerDrivenPlayerPropertiesTracker {
 
         var effects = EffectStateSetProto.newBuilder();
         for (var instance : player.getActiveEffects()) {
-            var key = BuiltInRegistries.MOB_EFFECT.getKey(instance.getEffect());
+            var key = BuiltInRegistries.MOB_EFFECT.getKey(instance.getEffect().value());
             if (key != null) {
                 effects.addEffects(EffectStateProto.newBuilder().setEffectId(key.toString())
                     .setLevel(instance.getAmplifier() + 1).build());
