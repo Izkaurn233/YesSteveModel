@@ -35,7 +35,7 @@ import com.elfmcys.ysm.natives.NativeProfiler;
 import com.elfmcys.ysm.util.RenderUtil;
 import com.google.common.collect.Maps;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -276,7 +276,7 @@ public abstract class AnimatableEntity<TEntity extends Entity>
         return requireInstallation().animations;
     }
 
-    public abstract ResourceLocation getTextureLocation();
+    public abstract Identifier getTextureLocation();
 
     public abstract float getWidthScale();
 

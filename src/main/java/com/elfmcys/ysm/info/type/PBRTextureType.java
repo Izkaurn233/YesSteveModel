@@ -1,6 +1,6 @@
 package com.elfmcys.ysm.info.type;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public enum PBRTextureType {
     NORMAL("_n"), SPECULAR("_s");
@@ -13,7 +13,7 @@ public enum PBRTextureType {
         this.suffix = suffix;
     }
 
-    public ResourceLocation getId(ResourceLocation uvId) {
-        return new ResourceLocation(uvId.getNamespace(), uvId.getPath() + suffix);
+    public Identifier getId(Identifier uvId) {
+        return Identifier.fromNamespaceAndPath(uvId.getNamespace(), uvId.getPath() + suffix);
     }
 }

@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** Client-side presentation adapter over its main-thread Catalog owner. */
 public final class ClientCatalogManager implements AutoCloseable {
@@ -68,7 +68,7 @@ public final class ClientCatalogManager implements AutoCloseable {
         return catalog.catalog().byModelId().containsKey(modelId);
     }
 
-    public Optional<String> findRenderTarget(Hash256 modelId, RenderTargetKind kind, ResourceLocation entityType) {
+    public Optional<String> findRenderTarget(Hash256 modelId, RenderTargetKind kind, Identifier entityType) {
         var entry = catalog.find(modelId).orElse(null);
         if (entry == null) {
             return Optional.empty();

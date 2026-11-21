@@ -5,7 +5,7 @@ import com.elfmcys.ysm.api.model.ModelKind;
 import com.elfmcys.ysm.api.model.event.RegisterModelLocatorEvent;
 import com.elfmcys.ysm.geckolib3.geo.render.built.GeoLocator;
 import com.elfmcys.ysm.geckolib3.geo.render.built.GeoLocatorType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class PlayerLocator extends GeoLocatorType {
     private static PlayerLocator INSTANCE;
@@ -26,7 +26,7 @@ public class PlayerLocator extends GeoLocatorType {
 
     @SuppressWarnings("removal")
     private PlayerLocator() {
-        super(new ResourceLocation(YesSteveModel.MOD_ID, "player"));
+        super(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "player"));
     }
 
     public static void init() {

@@ -4,7 +4,7 @@ import com.elfmcys.ysm.expression.host.EntityComponent;
 import com.elfmcys.ysm.api.molang.MolangContextView;
 import com.elfmcys.ysm.client.compat.curios.CuriosCompat;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -23,7 +23,7 @@ public final class CuriosBuiltins implements EntityComponent<LivingEntity> {
             return null;
         var items = new ReferenceOpenHashSet<Item>();
         for (String name : names) {
-            var id = ResourceLocation.tryParse(name);
+            var id = Identifier.tryParse(name);
             if (id == null)
                 return null;
             var item = ForgeRegistries.ITEMS.getValue(id);

@@ -18,7 +18,7 @@ import com.elfmcys.ysm.model.domain.RenderTargetIds;
 import com.elfmcys.ysm.expression.aot.RenderTargetExpressionModule;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -177,7 +177,7 @@ public class CustomFirstPersonArmEntity extends AnimatableEntity<LocalPlayer> {
     }
 
     @Override
-    public ResourceLocation getTextureLocation() {
+    public Identifier getTextureLocation() {
         return getModelRenderTarget().textureId();
     }
 

@@ -1,13 +1,13 @@
 package com.elfmcys.ysm.geckolib3.geo.render.built;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GeoLocatorTypeRegistry {
-    private static final HashMap<ResourceLocation, GeoLocatorType> MAP = new HashMap<>();
+    private static final HashMap<Identifier, GeoLocatorType> MAP = new HashMap<>();
     private static final AtomicBoolean FROZEN = new AtomicBoolean(false);
 
     static void register(GeoLocatorType type) {
@@ -26,7 +26,7 @@ public class GeoLocatorTypeRegistry {
     }
 
     @Nullable
-    public static GeoLocatorType get(ResourceLocation id) {
+    public static GeoLocatorType get(Identifier id) {
         return MAP.get(id);
     }
 }

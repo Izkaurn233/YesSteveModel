@@ -5,7 +5,7 @@ import com.elfmcys.ysm.api.model.ModelKind;
 import com.elfmcys.ysm.api.model.event.RegisterModelLocatorEvent;
 import com.elfmcys.ysm.geckolib3.geo.render.built.GeoLocator;
 import com.elfmcys.ysm.geckolib3.geo.render.built.GeoLocatorType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class FirstPersonLocator extends GeoLocatorType {
     private static FirstPersonLocator INSTANCE;
@@ -16,7 +16,7 @@ public class FirstPersonLocator extends GeoLocatorType {
 
     @SuppressWarnings("removal")
     private FirstPersonLocator() {
-        super(new ResourceLocation(YesSteveModel.MOD_ID, "first_person"));
+        super(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "first_person"));
     }
 
     public static void init() {

@@ -16,7 +16,7 @@ import com.elfmcys.ysm.model.resource.client.ResourceLease;
 import com.elfmcys.ysm.model.resource.client.VehicleModelResources;
 import com.elfmcys.ysm.model.service.ClientModelService;
 import com.elfmcys.ysm.proto.mixel.manifest.asset.RenderTargetKind;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +74,7 @@ public class CustomVehicleEntity extends AnimatableEntity<Entity> {
 
     @Override
     @NotNull
-    public ResourceLocation getTextureLocation() {
+    public Identifier getTextureLocation() {
         return getModelRenderTarget().textureId();
     }
 

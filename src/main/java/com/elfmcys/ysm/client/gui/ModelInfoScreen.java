@@ -25,15 +25,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("removal")
 public class ModelInfoScreen extends ModelScreen {
-    private final static ResourceLocation DEFAULT_AVATAR =
-        new ResourceLocation(YesSteveModel.MOD_ID, "texture/default_avatar.png");
+    private final static Identifier DEFAULT_AVATAR =
+        Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "texture/default_avatar.png");
     private final static Map<String, Component> LINK_TYPE_PRESET =
         ImmutableMap.of("home", Component.translatable("gui.yes_steve_model.url.home"), "donate",
             Component.translatable("gui.yes_steve_model.url.donate"));

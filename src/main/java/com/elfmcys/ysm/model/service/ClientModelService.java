@@ -43,7 +43,7 @@ import net.minecraft.client.Minecraft;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -337,7 +337,7 @@ public final class ClientModelService implements AutoCloseable {
     }
 
     public Optional<String> findRenderTarget(Hash256 hash,
-        com.elfmcys.ysm.proto.mixel.manifest.asset.RenderTargetKind kind, ResourceLocation entityType) {
+        com.elfmcys.ysm.proto.mixel.manifest.asset.RenderTargetKind kind, Identifier entityType) {
         return catalogManager.findRenderTarget(hash, kind, entityType);
     }
 

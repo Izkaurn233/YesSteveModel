@@ -18,20 +18,20 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 
 public class AuthorButton extends Button {
     private final AuthorProto author;
     private final ModelRenderTarget model;
-    private ResourceLocation avatar;
+    private Identifier avatar;
     private com.elfmcys.ysm.model.resource.client.asset.PageImages.Image avatarImage;
     private final int index;
     private final List<Component> tooltips;
     private int selectedContactIndex = -1;
     private final ModelScreen parent;
 
-    public AuthorButton(int pX, int pY, AuthorProto author, ModelRenderTarget model, ResourceLocation avatar, int index,
+    public AuthorButton(int pX, int pY, AuthorProto author, ModelRenderTarget model, Identifier avatar, int index,
         ModelScreen parent) {
         super(pX, pY, 70, 130, Component.empty(), b -> {
         }, DEFAULT_NARRATION);
@@ -50,7 +50,7 @@ public class AuthorButton extends Button {
         return new AuthorButton(pX, pY, null, null, null, -1, parent);
     }
 
-    public void setAvatar(ResourceLocation avatar) {
+    public void setAvatar(Identifier avatar) {
         this.avatar = avatar;
     }
 

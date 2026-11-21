@@ -5,7 +5,7 @@ import com.elfmcys.ysm.util.CleanerUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.time.StopWatch;
 
 import java.lang.ref.WeakReference;
@@ -179,31 +179,31 @@ public final class CustomTextureManager {
         }
 
         @SuppressWarnings("removal")
-        private ResourceLocation nextId() {
-            return new ResourceLocation(YesSteveModel.MOD_ID, "textures/" + ++counter);
+        private Identifier nextId() {
+            return Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "textures/" + ++counter);
         }
     }
 
     interface Host {
-        void register(ResourceLocation id, AbstractTexture texture);
+        void register(Identifier id, AbstractTexture texture);
 
-        void release(ResourceLocation id);
+        void release(Identifier id);
     }
 
     private static final class MinecraftHost implements Host {
         @Override
-        public void register(ResourceLocation id, AbstractTexture texture) {
+        public void register(Identifier id, AbstractTexture texture) {
             Minecraft.getInstance().getTextureManager().register(id, texture);
         }
 
         @Override
-        public void release(ResourceLocation id) {
+        public void release(Identifier id) {
             Minecraft.getInstance().getTextureManager().release(id);
         }
     }
 
     private static final class TextureRegistration {
-        private final TextureRegistrationState<ResourceLocation> state;
+        private final TextureRegistrationState<Identifier> state;
         private WeakReference<TextureHolderImpl> holder;
         private int delay;
         private boolean live = true;
@@ -218,7 +218,7 @@ public final class CustomTextureManager {
             listener.run();
         }
 
-        private TextureRegistration(TextureRegistrationState<ResourceLocation> state) {
+        private TextureRegistration(TextureRegistrationState<Identifier> state) {
             this.state = state;
         }
 
@@ -241,7 +241,7 @@ public final class CustomTextureManager {
     private record RemovalEvent(AbstractTexture texture, TextureRegistrationState.Token token) {
     }
 
-    private record TextureHolderImpl(ResourceLocation id,
+    private record TextureHolderImpl(Identifier id,
         TextureRegistrationState.Token token) implements TextureHolder {
     }
 }

@@ -12,7 +12,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("removal")
 public final class CommandRegistry {
     public static final SuggestionProvider<CommandSourceStack> ALL_MODELS =
-        SuggestionProviders.register(new ResourceLocation(YesSteveModel.MOD_ID, "models"), (source, builder) -> {
+        SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "models"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider) {
                 var paths = ServerModelService.current().flatMap(ServerModelService::catalog)
                     .map(snapshot -> snapshot.models().values().stream().map(handle -> handle.location().value())
@@ -38,7 +38,7 @@ public final class CommandRegistry {
         });
 
     public static final SuggestionProvider<CommandSourceStack> ALL_ANIMATIONS =
-        SuggestionProviders.register(new ResourceLocation(YesSteveModel.MOD_ID, "animations"), (source, builder) -> {
+        SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "animations"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider) {
                 if (Platform.isDedicatedServer()) {
                     // Fixme: 应该为服务器后台也添加提示功能
@@ -56,7 +56,7 @@ public final class CommandRegistry {
         });
 
     public static final SuggestionProvider<CommandSourceStack> ALL_TEXTURES =
-        SuggestionProviders.register(new ResourceLocation(YesSteveModel.MOD_ID, "textures"), (source, builder) -> {
+        SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "textures"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider) {
                 String modelPath = source.getArgument("model_path", String.class);
                 var model = ServerModelService.current().flatMap(ServerModelService::catalog)

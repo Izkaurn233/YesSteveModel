@@ -18,7 +18,7 @@ import com.elfmcys.ysm.client.entity.AnimatableEntity;
 import com.elfmcys.ysm.geckolib3.model.AnimatedGeoModel;
 import com.elfmcys.ysm.model.domain.Hash256;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,7 +251,7 @@ public abstract class CustomHumanoidEntity<T extends LivingEntity> extends Anima
     @Override
     @NotNull
     @SuppressWarnings("unchecked")
-    public ResourceLocation getTextureLocation() {
+    public Identifier getTextureLocation() {
         return getModelRenderTarget().textureId();
     }
 

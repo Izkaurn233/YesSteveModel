@@ -15,14 +15,14 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ItemStack;
 
 @SuppressWarnings("removal")
 public class CustomPlayerElytraLayer extends GeoLayerRenderer<CustomPlayerEntity> {
-    private static final ResourceLocation WINGS_LOCATION = new ResourceLocation("textures/entity/elytra.png");
+    private static final Identifier WINGS_LOCATION = Identifier.parse("textures/entity/elytra.png");
     private final ElytraModel<LivingEntity> elytraModel;
 
     public CustomPlayerElytraLayer(EntityRendererProvider.Context context) {
@@ -35,7 +35,7 @@ public class CustomPlayerElytraLayer extends GeoLayerRenderer<CustomPlayerEntity
         var player = animatable.getEntity();
         ItemStack stack = EquipmentUtil.getEquippedElytraItem(player);
         if (!stack.isEmpty() && player instanceof AbstractClientPlayer clientPlayer) {
-            ResourceLocation texture;
+            Identifier texture;
             if (clientPlayer.isElytraLoaded() && clientPlayer.getElytraTextureLocation() != null) {
                 texture = clientPlayer.getElytraTextureLocation();
             } else if (clientPlayer.isCapeLoaded() && clientPlayer.getCloakTextureLocation() != null

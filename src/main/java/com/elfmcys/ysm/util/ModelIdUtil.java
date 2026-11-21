@@ -3,7 +3,7 @@ package com.elfmcys.ysm.util;
 import com.elfmcys.ysm.YesSteveModel;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashSet;
@@ -52,16 +52,16 @@ public final class ModelIdUtil {
     }
 
     @SuppressWarnings("removal")
-    public static ResourceLocation getModelPackIconId(String hierarchy) {
-        return new ResourceLocation(YesSteveModel.MOD_ID, "model_pack_icon/" + hierarchy.hashCode());
+    public static Identifier getModelPackIconId(String hierarchy) {
+        return Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "model_pack_icon/" + hierarchy.hashCode());
     }
 
     @SuppressWarnings({"DataFlowIssue", "deprecation"})
-    public static Set<ResourceLocation> getEntityIdMatch(String[] matches) {
-        var set = new HashSet<ResourceLocation>();
+    public static Set<Identifier> getEntityIdMatch(String[] matches) {
+        var set = new HashSet<Identifier>();
         for (var match : matches) {
             if (match.startsWith("#")) {
-                var tagId = ResourceLocation.tryParse(match.substring(1));
+                var tagId = Identifier.tryParse(match.substring(1));
                 if (tagId == null) {
                     continue;
                 }
@@ -71,7 +71,7 @@ public final class ModelIdUtil {
                     set.add(type.builtInRegistryHolder().key().location());
                 });
             } else {
-                var entityId = ResourceLocation.tryParse(match);
+                var entityId = Identifier.tryParse(match);
                 if (entityId == null) {
                     continue;
                 }

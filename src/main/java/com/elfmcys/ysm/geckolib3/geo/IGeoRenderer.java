@@ -6,7 +6,7 @@ import com.elfmcys.ysm.natives.render.NativeRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -55,7 +55,7 @@ public interface IGeoRenderer<T extends AnimatableEntity<?>> {
 
     /** @return the host render state, or null when the subject is neither visible nor glowing */
     @Nullable
-    default RenderType getRenderType(ResourceLocation texture, boolean visible, boolean glowing, boolean translucent) {
+    default RenderType getRenderType(Identifier texture, boolean visible, boolean glowing, boolean translucent) {
         if (visible) {
             return translucent ? CustomTranslucentRenderType.create(texture) : RenderType.entityCutoutNoCull(texture);
         }

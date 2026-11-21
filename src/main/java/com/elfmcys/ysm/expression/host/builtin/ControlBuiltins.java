@@ -8,7 +8,7 @@ import com.elfmcys.ysm.geckolib3.core.builder.LoopType;
 import com.elfmcys.ysm.api.molang.MolangContextView;
 import com.elfmcys.ysm.util.EquipmentUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -126,7 +126,7 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
         if (item.isEmpty() || actual == null)
             return false;
         for (String name : names) {
-            var expected = ResourceLocation.tryParse(name);
+            var expected = Identifier.tryParse(name);
             if (expected == null)
                 return null;
             if (actual.equals(expected))
@@ -150,7 +150,7 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
         if (tags == null)
             return null;
         for (String name : names) {
-            var id = ResourceLocation.tryParse(name);
+            var id = Identifier.tryParse(name);
             if (id == null)
                 return null;
             if (block.is(tags.createTagKey(id)))
@@ -189,7 +189,7 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
             return id != null && value.equals(id.toString());
         }
         if (input.startsWith("#")) {
-            var id = ResourceLocation.tryParse(value);
+            var id = Identifier.tryParse(value);
             var tags = ForgeRegistries.ITEMS.tags();
             return id != null && tags != null && item.is(tags.createTagKey(id));
         }

@@ -6,7 +6,7 @@ import com.elfmcys.ysm.client.entity.AnimatableEntity;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public class SoundInstanceManager {
         final AudioPlaybackFactory modelFactory;
         final MinecraftSoundInstance namespaced;
         if (soundName.contains(":")) {
-            var soundId = ResourceLocation.tryParse(soundName);
+            var soundId = Identifier.tryParse(soundName);
             if (soundId == null) {
                 return false;
             }

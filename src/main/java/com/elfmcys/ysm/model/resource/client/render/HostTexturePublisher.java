@@ -7,7 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,18 +23,18 @@ interface HostTexturePublisher {
     }
 
     final class PublishedTextureBinding implements AutoCloseable {
-        private final ResourceLocation base;
+        private final Identifier base;
         private final TextureManager textureManager;
-        private final List<ResourceLocation> mappings;
+        private final List<Identifier> mappings;
         private final AtomicBoolean released = new AtomicBoolean();
 
-        PublishedTextureBinding(ResourceLocation base, TextureManager textureManager, List<ResourceLocation> mappings) {
+        PublishedTextureBinding(Identifier base, TextureManager textureManager, List<Identifier> mappings) {
             this.base = Objects.requireNonNull(base, "base");
             this.textureManager = Objects.requireNonNull(textureManager, "textureManager");
             this.mappings = List.copyOf(mappings);
         }
 
-        ResourceLocation base() {
+        Identifier base() {
             return base;
         }
 
@@ -73,7 +73,7 @@ final class MinecraftHostTexturePublisher implements HostTexturePublisher {
         RenderSystem.assertOnRenderThread();
         var manager = Minecraft.getInstance().getTextureManager();
         var texture = prepared.transfer();
-        var mappings = new ArrayList<ResourceLocation>(3);
+        var mappings = new ArrayList<Identifier>(3);
         var hostOwned = new ArrayList<AbstractTexture>(3);
         var base = nextId("base");
         var success = false;
@@ -119,7 +119,7 @@ final class MinecraftHostTexturePublisher implements HostTexturePublisher {
         }
     }
 
-    private void registerComponent(TextureManager manager, List<ResourceLocation> mappings,
+    private void registerComponent(TextureManager manager, List<Identifier> mappings,
         List<AbstractTexture> hostOwned, AbstractTexture texture, String component) {
         if (texture == null) {
             return;
@@ -130,7 +130,7 @@ final class MinecraftHostTexturePublisher implements HostTexturePublisher {
         hostOwned.add(texture);
     }
 
-    private static void register(TextureManager manager, ResourceLocation id, AbstractTexture texture) {
+    private static void register(TextureManager manager, Identifier id, AbstractTexture texture) {
         manager.register(id, texture);
         try {
             if (manager.getTexture(id) == texture) {
@@ -162,7 +162,7 @@ final class MinecraftHostTexturePublisher implements HostTexturePublisher {
     }
 
     @SuppressWarnings("removal")
-    private ResourceLocation nextId(String component) {
-        return new ResourceLocation(YesSteveModel.MOD_ID, "model-textures/" + ++nextId + "/" + component);
+    private Identifier nextId(String component) {
+        return Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "model-textures/" + ++nextId + "/" + component);
     }
 }

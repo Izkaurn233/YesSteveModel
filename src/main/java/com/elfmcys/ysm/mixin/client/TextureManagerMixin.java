@@ -4,7 +4,7 @@ import com.elfmcys.ysm.util.ResourceDiagnostics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,16 +20,16 @@ import java.util.Map;
 @Mixin(TextureManager.class)
 public class TextureManagerMixin {
     @Unique
-    private final Map<ResourceLocation, Integer> ysm$gpuIds = new HashMap<>();
+    private final Map<Identifier, Integer> ysm$gpuIds = new HashMap<>();
 
     @Shadow
     @Final
-    private Map<ResourceLocation, AbstractTexture> byPath;
+    private Map<Identifier, AbstractTexture> byPath;
 
     @Inject(
-        method = "register(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/texture/AbstractTexture;)V",
+        method = "register(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/renderer/texture/AbstractTexture;)V",
         at = @At("RETURN"))
-    private void afterRegister(ResourceLocation id, AbstractTexture texture, CallbackInfo ci) {
+    private void afterRegister(Identifier id, AbstractTexture texture, CallbackInfo ci) {
         if ("ysm".equals(id.getNamespace())) {
             var installed = byPath.get(id);
             var accepted = installed != MissingTextureAtlasSprite.getTexture();
@@ -43,7 +43,7 @@ public class TextureManagerMixin {
     }
 
     @Inject(method = "safeClose", at = @At("RETURN"))
-    private void afterClose(ResourceLocation id, AbstractTexture texture, CallbackInfo ci) {
+    private void afterClose(Identifier id, AbstractTexture texture, CallbackInfo ci) {
         if ("ysm".equals(id.getNamespace())) {
             ResourceDiagnostics.untrack(ResourceDiagnostics.Kind.TEXTURE, texture);
             var gpuId = ysm$gpuIds.remove(id);

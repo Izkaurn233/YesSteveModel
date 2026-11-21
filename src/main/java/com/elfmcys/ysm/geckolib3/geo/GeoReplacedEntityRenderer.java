@@ -21,7 +21,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -49,14 +49,14 @@ public abstract class GeoReplacedEntityRenderer<TEntity extends LivingEntity, T 
         renderAnimatableEntity(animatableEntity, null, entityYaw, partialTick, poseStack, bufferSource, packedLight);
     }
 
-    public void renderAnimatableEntity(T animatableEntity, @Nullable ResourceLocation textureOverride, float entityYaw,
+    public void renderAnimatableEntity(T animatableEntity, @Nullable Identifier textureOverride, float entityYaw,
         float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         renderReplacement(animatableEntity, textureOverride, entityYaw, partialTick, poseStack, bufferSource,
             packedLight, () -> {
             });
     }
 
-    public boolean renderReplacement(T animatableEntity, @Nullable ResourceLocation textureOverride, float entityYaw,
+    public boolean renderReplacement(T animatableEntity, @Nullable Identifier textureOverride, float entityYaw,
         float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, Runnable handoff) {
         if (!animatableEntity.isPresentationAllowed())
             return false;
@@ -66,7 +66,7 @@ public abstract class GeoReplacedEntityRenderer<TEntity extends LivingEntity, T 
     }
 
     public boolean renderPreparedReplacement(T animatableEntity, GeoRenderData data,
-        @Nullable ResourceLocation textureOverride, float entityYaw, float partialTick, PoseStack poseStack,
+        @Nullable Identifier textureOverride, float entityYaw, float partialTick, PoseStack poseStack,
         MultiBufferSource bufferSource, int packedLight, Runnable handoff) {
         if (!animatableEntity.isPresentationAllowed())
             return false;
@@ -87,7 +87,7 @@ public abstract class GeoReplacedEntityRenderer<TEntity extends LivingEntity, T 
         });
     }
 
-    protected void renderPrepared(T animatableEntity, GeoRenderData data, @Nullable ResourceLocation textureOverride,
+    protected void renderPrepared(T animatableEntity, GeoRenderData data, @Nullable Identifier textureOverride,
         float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         final TEntity entity = animatableEntity.getEntity();
         var mc = Minecraft.getInstance();

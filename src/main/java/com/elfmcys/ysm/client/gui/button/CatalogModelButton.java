@@ -22,7 +22,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ import java.util.List;
 
 /** Keeps images independent from the card's temporary live presentation. */
 public final class CatalogModelButton extends Button implements AutoCloseable {
-    private static final ResourceLocation ICON = new ResourceLocation(YesSteveModel.MOD_ID, "texture/icon.png");
+    private static final Identifier ICON = Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "texture/icon.png");
     private static final int CARD_OVERLAY_Z = 3500;
     private static final int TOOLTIP_Z = 4000;
 

@@ -1,7 +1,7 @@
 package com.elfmcys.ysm.geckolib3.geo.render.built;
 
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -9,9 +9,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class GeoLocatorType {
     private final Object2ReferenceOpenHashMap<String, GeoLocator> nameMap = new Object2ReferenceOpenHashMap<>(16);
     private final AtomicBoolean frozen = new AtomicBoolean(false);
-    private final ResourceLocation id;
+    private final Identifier id;
 
-    protected GeoLocatorType(ResourceLocation id) {
+    protected GeoLocatorType(Identifier id) {
         this.id = id;
         GeoLocatorTypeRegistry.register(this);
     }
@@ -49,7 +49,7 @@ public class GeoLocatorType {
         frozen.setRelease(true);
     }
 
-    public ResourceLocation id() {
+    public Identifier id() {
         return id;
     }
 }

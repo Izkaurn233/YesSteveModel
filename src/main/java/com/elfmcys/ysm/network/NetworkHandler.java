@@ -16,7 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -32,8 +32,8 @@ import us.hebi.quickbuf.ProtoMessage;
 /** The sole Forge adapter for the current YSM frame protocol. */
 public final class NetworkHandler {
     public static final String VERSION = ProtocolVersion.TRANSPORT_VERSION;
-    public static final ResourceLocation CHANNEL_NAME =
-        new ResourceLocation(YesSteveModel.MOD_ID, ProtocolVersion.CHANNEL_PATH);
+    public static final Identifier CHANNEL_NAME =
+        Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, ProtocolVersion.CHANNEL_PATH);
     public static final EventNetworkChannel CHANNEL =
         NetworkRegistry.newEventChannel(CHANNEL_NAME, () -> VERSION, ignored -> true, ignored -> true);
 

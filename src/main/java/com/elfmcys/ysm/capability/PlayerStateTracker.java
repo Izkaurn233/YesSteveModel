@@ -5,7 +5,7 @@ import com.elfmcys.ysm.proto.network.EffectStateSetProto;
 import com.elfmcys.ysm.proto.network.GameplayStateProto;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 
@@ -79,7 +79,7 @@ public class PlayerStateTracker extends HumanoidStateTracker<Player> {
             if (full)
                 effects.clear();
             for (var value : effectState.effects()) {
-                var key = ResourceLocation.tryParse(value.effectId());
+                var key = Identifier.tryParse(value.effectId());
                 var effect = key == null ? null : BuiltInRegistries.MOB_EFFECT.get(key);
                 if (effect != null) {
                     if (value.level() == 0)

@@ -2,7 +2,7 @@ package com.elfmcys.ysm.geckolib3.geo;
 
 import net.minecraft.Util;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -10,13 +10,13 @@ import java.util.function.Function;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class CustomTranslucentRenderType extends RenderType {
-    private static final Function<ResourceLocation, CustomTranslucentRenderType> CUSTOM_TRANSLUCENT =
+    private static final Function<Identifier, CustomTranslucentRenderType> CUSTOM_TRANSLUCENT =
         Util.memoize(CustomTranslucentRenderType::new);
 
     private final boolean isOutline;
     private final Optional<RenderType> outline;
 
-    private CustomTranslucentRenderType(ResourceLocation textureLocation) {
+    private CustomTranslucentRenderType(Identifier textureLocation) {
         this(RenderType.entityTranslucent(textureLocation));
     }
 
@@ -38,7 +38,7 @@ public class CustomTranslucentRenderType extends RenderType {
         return outline;
     }
 
-    public static CustomTranslucentRenderType create(ResourceLocation textureLocation) {
+    public static CustomTranslucentRenderType create(Identifier textureLocation) {
         return CUSTOM_TRANSLUCENT.apply(textureLocation);
     }
 }

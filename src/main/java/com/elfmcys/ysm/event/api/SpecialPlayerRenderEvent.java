@@ -2,7 +2,7 @@ package com.elfmcys.ysm.event.api;
 
 import com.elfmcys.ysm.api.event.CancellableEvent;
 import com.elfmcys.ysm.client.entity.CustomPlayerEntity;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ public class SpecialPlayerRenderEvent extends CancellableEvent {
     private final CustomPlayerEntity customPlayer;
     private final String modelId;
     @Nullable
-    private ResourceLocation textureLocationOverride;
+    private Identifier textureLocationOverride;
 
     // Forge required a no-arg constructor; kept for source compatibility.
     public SpecialPlayerRenderEvent() {
@@ -39,11 +39,11 @@ public class SpecialPlayerRenderEvent extends CancellableEvent {
     }
 
     @Nullable
-    public ResourceLocation getTextureLocationOverride() {
+    public Identifier getTextureLocationOverride() {
         return textureLocationOverride;
     }
 
-    public void setTextureLocationOverride(@Nullable ResourceLocation textureLocationOverride) {
+    public void setTextureLocationOverride(@Nullable Identifier textureLocationOverride) {
         this.textureLocationOverride = textureLocationOverride;
     }
 }

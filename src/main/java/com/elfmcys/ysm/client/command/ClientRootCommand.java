@@ -22,7 +22,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Optional;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class ClientRootCommand {
     }
 
     public static final SuggestionProvider<CommandSourceStack> ALL_VARS =
-        SuggestionProviders.register(new ResourceLocation(YesSteveModel.MOD_ID, "vars"), (source, builder) -> {
+        SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "vars"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider && Platform.isClient()) {
                 return getTarget().map(cap -> {
                     cap.waitForAsyncUpdate();
@@ -77,7 +77,7 @@ public class ClientRootCommand {
         });
 
     public static final SuggestionProvider<CommandSourceStack> ALL_CONTROLLERS =
-        SuggestionProviders.register(new ResourceLocation(YesSteveModel.MOD_ID, "controllers"), (source, builder) -> {
+        SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "controllers"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider && Platform.isClient()) {
                 return getTarget().map(target -> {
                     target.waitForAsyncUpdate();

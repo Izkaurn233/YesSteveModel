@@ -11,7 +11,7 @@ import com.elfmcys.ysm.util.CleanerUtil;
 import com.elfmcys.ysm.util.ResourceDiagnostics;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.lang.ref.Cleaner;
 import java.util.Collections;
@@ -36,7 +36,7 @@ public final class ModelRenderTarget implements AutoCloseable {
     private final ModelInfoView modelInfo;
     private final CleanupState cleanupState;
     private final Cleaner.Cleanable cleanable;
-    private volatile ResourceLocation textureId;
+    private volatile Identifier textureId;
 
     public ModelRenderTarget(Hash256 modelHash, String renderTargetId, RenderTargetResources targetResources,
         CommonAsset assets, RenderTargetExpressionModule expressions, ModelInfoView modelInfo) {
@@ -148,7 +148,7 @@ public final class ModelRenderTarget implements AutoCloseable {
         return modelInfo;
     }
 
-    public ResourceLocation textureId() {
+    public Identifier textureId() {
         var current = textureId;
         if (current == null) {
             throw new IllegalStateException("Model render target is not published");
@@ -156,7 +156,7 @@ public final class ModelRenderTarget implements AutoCloseable {
         return current;
     }
 
-    public void adoptTexture(ResourceLocation textureId, AutoCloseable binding) {
+    public void adoptTexture(Identifier textureId, AutoCloseable binding) {
         Objects.requireNonNull(textureId, "textureId");
         cleanupState.adopt(binding);
         this.textureId = textureId;
