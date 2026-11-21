@@ -53,7 +53,8 @@ public final class AssetPaths {
     public boolean globalEnabled() { return global != null; }
     public Optional<GlobalDirectories> global() { return Optional.ofNullable(global); }
     public List<Diagnostic> diagnostics() { return diagnostics; }
-    public Path defaultCustomRoot() { return global == null ? customModelsRoot() : global.customRoot(); }
+    /** Default custom folder (open-folder target): the game-directory custom root, not the global DATA one. */
+    public Path defaultCustomRoot() { return customModelsRoot(); }
     public Path remoteRoot() { return (global == null ? localCacheRoot : global.cacheRoot()).resolve("remote"); }
 
     public static Path gameModelsRoot(Path gameDirectory) { return gameDirectory.resolve("ysm"); }

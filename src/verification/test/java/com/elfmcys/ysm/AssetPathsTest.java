@@ -32,7 +32,8 @@ class AssetPathsTest {
         var global = paths.global().orElseThrow();
         assertEquals(root, global.dataRoot());
         assertEquals(root.resolve("cache").toRealPath(), global.cacheRoot());
-        assertEquals(root.resolve("custom"), paths.defaultCustomRoot());
+        assertEquals(temp.resolve("game/ysm/custom"), paths.defaultCustomRoot());
+        assertEquals(root.resolve("custom"), global.customRoot());
         assertEquals(root.resolve("cache").toRealPath().resolve("remote"), paths.remoteRoot());
         assertFalse(Files.exists(platform));
         try (var entries = Files.walk(root)) {
@@ -43,7 +44,7 @@ class AssetPathsTest {
         Files.writeString(root.resolve("custom/shared.marker"), "shared-fixture");
         var second = AssetPaths.discover(temp.resolve("second-game"), temp, temp,
             Map.of("YSM_HOME", root.toString()), WINDOWS, null);
-        assertEquals("shared-fixture", Files.readString(second.defaultCustomRoot().resolve("shared.marker")));
+        assertEquals("shared-fixture", Files.readString(second.global().orElseThrow().customRoot().resolve("shared.marker")));
         assertEquals(paths.global().orElseThrow().cacheRoot(), second.global().orElseThrow().cacheRoot());
     }
 

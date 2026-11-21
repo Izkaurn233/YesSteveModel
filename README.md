@@ -21,7 +21,7 @@
 | 项目 | 版本 |
 | --- | --- |
 | Minecraft | 26.3（官方未混淆名） |
-| Fabric Loader / Loom | 0.20.1 / 1.19.4（no-remap） |
+| Fabric Loader / Loom | 0.19.5 / 1.19.4（no-remap） |
 | Fabric API | 0.166.2+26.3 |
 | 配置 | Forge Config API Port 26.3.1 |
 | Java / Gradle | JDK 25 / Gradle 9.9.2 |
