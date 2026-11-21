@@ -22,7 +22,7 @@ public final class BakedAssetWriter extends AssetFileWriter {
 
     public BakedAssetWriter() {
         setSchemaId(BakedAssetConstant.SCHEMA_ID);
-        setProperty(BakedAssetConstant.PROP_VERSION, BakedAssetConstant.CURRENT_VERSION.toString());
+        setProperty(BakedAssetConstant.PROP_VERSION, BakedAssetConstant.CURRENT_VERSION);
     }
 
     public void setData(Hash256 containerId, String renderTargetId, Hash256 inputHash,

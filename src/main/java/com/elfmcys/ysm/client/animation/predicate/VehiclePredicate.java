@@ -11,10 +11,11 @@ import com.elfmcys.ysm.geckolib3.core.builder.LoopType;
 import com.elfmcys.ysm.geckolib3.core.event.predicate.AnimationEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Saddleable;
-import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.pig.Pig;
+import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +59,10 @@ public class VehiclePredicate implements IAnimationPredicate<CustomHumanoidEntit
         if (vehicle instanceof Pig) {
             return playAnimation(event, "ride_pig", LoopType.LOOP);
         }
-        if (vehicle instanceof Saddleable) {
+        if (vehicle instanceof AbstractHorse || vehicle instanceof Strider) {
             return playAnimation(event, "ride", LoopType.LOOP);
         }
-        if (vehicle instanceof Boat) {
+        if (vehicle instanceof AbstractBoat) {
             return playAnimation(event, "boat", LoopType.LOOP);
         }
 

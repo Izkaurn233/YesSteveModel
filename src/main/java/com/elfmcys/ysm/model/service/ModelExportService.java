@@ -17,6 +17,7 @@ import com.elfmcys.ysm.model.storage.ModelExporter;
 import com.elfmcys.ysm.model.storage.PreviewStore;
 import com.elfmcys.ysm.util.Closeable;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permissions;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -42,7 +43,7 @@ public final class ModelExportService {
     private ModelExportService() {}
 
     public static Environment environment(CommandSourceStack source) {
-        if (!source.hasPermission(2) || source.getServer().isDedicatedServer()) {
+        if (!source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) || source.getServer().isDedicatedServer()) {
             throw new IllegalStateException("Export requires integrated server permission level 2");
         }
         var environment = ServerModelService.instance().exportEnvironment();

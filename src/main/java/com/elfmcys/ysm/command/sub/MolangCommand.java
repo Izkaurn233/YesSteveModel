@@ -10,6 +10,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.selector.EntitySelector;
@@ -25,7 +26,7 @@ public class MolangCommand {
 
     public static LiteralArgumentBuilder<CommandSourceStack> get() {
         LiteralArgumentBuilder<CommandSourceStack> molang =
-            Commands.literal(MOLANG_NAME).requires(src -> CommandUtil.hasPermission(src, 2));
+            Commands.literal(MOLANG_NAME).requires(src -> CommandUtil.hasPermission(src, Permissions.COMMANDS_GAMEMASTER));
         LiteralArgumentBuilder<CommandSourceStack> execute = Commands.literal(EXECUTE_NAME);
 
         RequiredArgumentBuilder<CommandSourceStack, String> exp =

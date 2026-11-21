@@ -3,7 +3,8 @@ import com.elfmcys.ysm.gradle.BuiltinModelToolTask
 sourceSets {
     buildTool {
         compileClasspath += sourceSets.main.output.classesDirs + sourceSets.main.compileClasspath
-        runtimeClasspath = output + sourceSets.main.output.classesDirs + sourceSets.declaration.output + configurations.runtimeClasspath
+        runtimeClasspath = output + sourceSets.main.output.classesDirs + sourceSets.declaration.output +
+                configurations.runtimeClasspath + configurations.buildToolRuntimeClasspath
     }
 }
 

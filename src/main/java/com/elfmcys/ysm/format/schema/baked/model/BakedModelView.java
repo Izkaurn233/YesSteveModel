@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Objects;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 public class BakedModelView {
@@ -32,8 +31,8 @@ public class BakedModelView {
 
         var version = Objects.requireNonNull(assetView.getSchemaProperty(BakedModelConstant.PROP_VERSION),
             "Version property not found");
-        if (!VersionCompatibility.isCompatible(BakedModelConstant.CURRENT_VERSION.toString(), version, (current,
-            candidate) -> new DefaultArtifactVersion(current).equals(new DefaultArtifactVersion(candidate)))) {
+        if (!VersionCompatibility.isCompatibleRelease(BakedModelConstant.CURRENT_VERSION, version,
+            (current, candidate) -> current.equals(candidate))) {
             throw new UnsupportedEncodingException(String.format("Unsupported baked model version: \"%s\".", version));
         }
 

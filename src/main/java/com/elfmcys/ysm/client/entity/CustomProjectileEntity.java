@@ -30,7 +30,7 @@ public class CustomProjectileEntity extends AnimatableEntity<Projectile> {
     protected String requestedRenderTargetId() {
         var hash = getModelHash();
         return hash == null ? null : ClientModelService.instance().findRenderTarget(hash, RenderTargetKind.PROJECTILE,
-            entity.getType().builtInRegistryHolder().key().location()).orElse(null);
+            entity.getType().builtInRegistryHolder().key().identifier()).orElse(null);
     }
 
     @Override

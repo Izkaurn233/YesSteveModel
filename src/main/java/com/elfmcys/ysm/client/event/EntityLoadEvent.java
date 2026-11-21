@@ -9,45 +9,38 @@ import com.elfmcys.ysm.capability.VehicleAnimatableCapabilityProvider;
 import com.elfmcys.ysm.util.AnimatableCacheUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class EntityLoadEvent {
     private static final Cache<Integer, List<Consumer<Entity>>> CACHE =
         CacheBuilder.newBuilder().expireAfterAccess(30, TimeUnit.SECONDS).build();
 
-    @SubscribeEvent
-    public static void onEntityLoadToWorld(final EntityJoinLevelEvent event) {
+    public static void onEntityLoadToWorld(Entity entity) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
-        var list = CACHE.getIfPresent(event.getEntity().getId());
+        var list = CACHE.getIfPresent(entity.getId());
         if (list != null) {
             for (var consumer : list) {
-                consumer.accept(event.getEntity());
+                consumer.accept(entity);
             }
         }
-        CACHE.invalidate(event.getEntity().getId());
+        CACHE.invalidate(entity.getId());
     }
 
-    @SubscribeEvent
-    public static void onEntityLeaveWorld(final EntityLeaveLevelEvent event) {
-        var entity = event.getEntity();
+    public static void onEntityLeaveWorld(Entity entity) {
         if (entity instanceof LocalPlayer player) {
             RegisterEntityRenderersEvent.releaseFirstPersonArm(player);
         }
@@ -59,10 +52,7 @@ public class EntityLoadEvent {
         CACHE.invalidate(entity.getId());
     }
 
-    @SubscribeEvent
-    public static void onClientLevelUnload(LevelEvent.Unload event) {
-        if (!(event.getLevel() instanceof ClientLevel level))
-            return;
+    public static void onClientLevelUnload(ClientLevel level) {
         ModelScreen.unload(level);
         var player = Minecraft.getInstance().player;
         if (player != null && player.level() == level)

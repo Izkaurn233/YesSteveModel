@@ -27,7 +27,7 @@ public class PlayerModelScreenKey {
                 YesSteveModel.sendUnavailableMessage();
                 return;
             }
-            if (NetworkHandler.isRemoteChannelPresent() && !ServerConfig.CAN_SWITCH_MODEL.get()) {
+            if (NetworkHandler.isRemoteChannelPresent() && !ServerConfig.readClient(ServerConfig.CAN_SWITCH_MODEL)) {
                 Minecraft.getInstance().gui.setScreen(new ConfigScreen(null));
                 return;
             }

@@ -291,11 +291,6 @@ public final class MolangExtensions {
     }
 
     static boolean versionMatches(String actual, String range) {
-        try {
-            return org.apache.maven.artifact.versioning.VersionRange.createFromVersionSpec(range)
-                .containsVersion(new org.apache.maven.artifact.versioning.DefaultArtifactVersion(actual));
-        } catch (org.apache.maven.artifact.versioning.InvalidVersionSpecificationException failure) {
-            throw new IllegalArgumentException("invalid loader version range", failure);
-        }
+        return ModVersionRange.contains(actual, range);
     }
 }

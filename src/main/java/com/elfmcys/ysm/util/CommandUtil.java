@@ -3,13 +3,11 @@ package com.elfmcys.ysm.util;
 import com.elfmcys.ysm.platform.Platform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permission;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.server.ServerLifecycleHooks;
-
-import org.jetbrains.annotations.Nullable;
 
 public class CommandUtil {
     private static final String MESSAGE_HEADER = "§6§l【§aYSM§6§l】§r";
@@ -21,42 +19,23 @@ public class CommandUtil {
     // 是否为单人模式，或联机模式下的房主
     public static boolean isLocalPlayer(Entity player) {
         return player != null && Platform.isClient()
-            && player.getUUID().equals(Minecraft.getInstance().getUser().getGameProfile().getId());
+            && player.getUUID().equals(Minecraft.getInstance().getUser().getProfileId());
     }
 
-    public static boolean hasPermission(@Nullable Entity source, int level) {
-        if (source == null) {
-            return false;
-        }
-        if (source.hasPermissions(level)) {
-            return true;
-        }
-        if (isLocalPlayer(source)) {
-            return true;
-        }
-        return false;
+    public static boolean hasPermission(CommandSourceStack source, Permission permission) {
+        return source.permissions().hasPermission(permission) || isLocalPlayer(source.getEntity());
     }
 
-    public static boolean hasPermission(CommandSourceStack source, int level) {
-        if (source.hasPermission(level)) {
-            return true;
-        }
-        if (source.getEntity() != null && isLocalPlayer(source.getEntity())) {
-            return true;
-        }
-        return false;
-    }
-
-    public static void sendAsyncFeedback(@Nullable final CommandSourceStack oldSource, final Component feedbackMsg,
+    public static void sendAsyncFeedback(final CommandSourceStack oldSource, final Component feedbackMsg,
         final boolean allowLogging) {
-        final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) {
+        final MinecraftServer server = oldSource.getServer();
+        if (server.isStopped()) {
             return;
         }
         server.execute(() -> {
             CommandSourceStack commandSource = null;
-            if (oldSource != null && oldSource.getEntity() instanceof ServerPlayer) {
-                ServerPlayer newSender = server.getPlayerList().getPlayer(oldSource.getEntity().getUUID());
+            if (oldSource.getEntity() instanceof ServerPlayer player) {
+                ServerPlayer newSender = server.getPlayerList().getPlayer(player.getUUID());
                 if (newSender != null) {
                     commandSource = newSender.createCommandSourceStack();
                 }

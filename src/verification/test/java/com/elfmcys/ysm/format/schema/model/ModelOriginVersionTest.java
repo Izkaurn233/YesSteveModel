@@ -1,7 +1,6 @@
 package com.elfmcys.ysm.format.schema.model;
 
 import org.junit.jupiter.api.Test;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModelOriginVersionTest {
@@ -56,8 +55,8 @@ class ModelOriginVersionTest {
     @Test
     void historicalVersionsRemainSortedForBinarySearch() {
         for (int level = 1; level <= ModelOriginVersion.CURRENT; level++) {
-            var previous = new DefaultArtifactVersion(ModelOriginVersion.toModVersion(level - 1));
-            var current = new DefaultArtifactVersion(ModelOriginVersion.toModVersion(level));
+            var previous = ModelOriginVersion.parseRelease(ModelOriginVersion.toModVersion(level - 1));
+            var current = ModelOriginVersion.parseRelease(ModelOriginVersion.toModVersion(level));
             assertTrue(previous.compareTo(current) < 0, "level " + level);
         }
     }

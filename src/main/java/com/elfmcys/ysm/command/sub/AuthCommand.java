@@ -14,6 +14,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
@@ -25,7 +26,7 @@ public final class AuthCommand {
     private AuthCommand() {}
 
     public static LiteralArgumentBuilder<CommandSourceStack> get() {
-        var auth = Commands.literal("auth").requires(source -> CommandUtil.hasPermission(source, 2));
+        var auth = Commands.literal("auth").requires(source -> CommandUtil.hasPermission(source, Permissions.COMMANDS_GAMEMASTER));
         var targets = Commands.argument(TARGETS, EntityArgument.players());
         var path = Commands.argument(MODEL_PATH, StringArgumentType.string()).suggests(CommandRegistry.ALL_MODELS);
         auth.then(targets.then(Commands.literal("add").then(path.executes(context -> change(context, true)))));

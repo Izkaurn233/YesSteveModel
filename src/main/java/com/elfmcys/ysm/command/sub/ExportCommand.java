@@ -10,6 +10,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 
@@ -21,7 +22,7 @@ public final class ExportCommand {
     private ExportCommand() {}
 
     public static LiteralArgumentBuilder<CommandSourceStack> get() {
-        return Commands.literal("export").requires(source -> source.hasPermission(2))
+        return Commands.literal("export").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .then(Commands.argument(MODEL_ID, StringArgumentType.string()).suggests(CommandRegistry.ALL_MODELS)
                 .executes(context -> export(context, null))
                 .then(Commands.argument(EXTRA, StringArgumentType.greedyString())
@@ -29,7 +30,7 @@ public final class ExportCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> getAll() {
-        return Commands.literal("export-all").requires(source -> source.hasPermission(2))
+        return Commands.literal("export-all").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> exportAll(context, null))
             .then(Commands.argument(PATTERN, StringArgumentType.greedyString())
                 .executes(context -> exportAll(context, parsePattern(StringArgumentType.getString(context, PATTERN)))));

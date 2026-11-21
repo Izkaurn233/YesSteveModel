@@ -1,7 +1,7 @@
 package com.elfmcys.ysm.buffer;
 
 import com.elfmcys.ysm.util.UnsafeUtil;
-import io.netty.util.internal.PlatformDependent;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 
 final class NativeNioBuffer implements NativeStorage {
@@ -18,7 +18,7 @@ final class NativeNioBuffer implements NativeStorage {
 
     @Override
     public long ptr() {
-        return PlatformDependent.directBufferAddress(data);
+        return MemorySegment.ofBuffer(data).address();
     }
 
     @Override

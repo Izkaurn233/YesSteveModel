@@ -13,23 +13,19 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Objects;
-import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 
 public class ModelFileWriter extends AssetFileWriter {
     public ModelFileWriter() {
         setSchemaId(ModelFileConstant.SCHEMA_ID);
-        setProperty(ModelFileConstant.PROP_VERSION, ModelFileConstant.CURRENT_VERSION.toString());
+        setProperty(ModelFileConstant.PROP_VERSION, ModelFileConstant.CURRENT_VERSION);
         if (YesSteveModel.MOD != null) {
-            var sign = ((ModFileInfo)YesSteveModel.MOD.getModInfo().getOwningFile()).getCodeSigningFingerprint()
-                .orElse("(unsigned)");
-            var modInfo = YesSteveModel.MOD.getModInfo();
-            setProperty(ModelFileConstant.PROP_VENDOR, String.format("%s(%s) v%s", modInfo.getDisplayName(),
-                modInfo.getModId(), modInfo.getVersion() != null ? modInfo.getVersion().toString() : "(unknown)"));
-            setProperty(ModelFileConstant.PROP_SIGNATURE, sign);
+            var modInfo = YesSteveModel.MOD.getMetadata();
+            setProperty(ModelFileConstant.PROP_VENDOR, String.format("%s(%s) v%s", modInfo.getName(),
+                modInfo.getId(), modInfo.getVersion().getFriendlyString()));
         } else {
             setProperty(ModelFileConstant.PROP_VENDOR, "Yes Steve Model(" + YesSteveModel.MOD_ID + ") vdev");
-            setProperty(ModelFileConstant.PROP_SIGNATURE, "(unsigned)");
         }
+        setProperty(ModelFileConstant.PROP_SIGNATURE, "(unsigned)");
     }
 
     private ModelFileWriter(ModelFileWriter source) {

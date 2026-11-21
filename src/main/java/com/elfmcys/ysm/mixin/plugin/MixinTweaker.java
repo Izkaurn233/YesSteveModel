@@ -38,10 +38,6 @@ public class MixinTweaker implements IMixinConfigPlugin {
         if (Platform.isClient()) {
             List<String> list = Lists.newArrayList();
 
-            if (Platform.isDevelopment()) {
-                list.add("client.TextureManagerMixin");
-            }
-
             if (ParCoolCompat.isInstalled()) {
                 list.add("client.parcool.AnimationAccessor");
                 list.add("client.parcool.DodgeAnimatorAccessor");

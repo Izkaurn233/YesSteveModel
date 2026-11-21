@@ -9,6 +9,7 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -48,7 +49,7 @@ public class ParticleSpawner {
 
     private static ParticleOptions particleOptions(String id) throws ExecutionException, CommandSyntaxException {
         return PARTICLE_OPTIONS_CACHE.get(id,
-            () -> ParticleArgument.readParticle(new StringReader(id), BuiltInRegistries.PARTICLE_TYPE.asLookup()));
+            () -> ParticleArgument.readParticle(new StringReader(id), RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY)));
     }
 
     private static void spawnParticle(Entity entity, ParticleOptions particleOptions, Vector3d pos, Vector3d delta,

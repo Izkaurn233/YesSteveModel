@@ -1,21 +1,19 @@
 package com.elfmcys.ysm.client.gui.button;
 
 import com.elfmcys.ysm.client.animation.AnimationRegister;
-import com.elfmcys.ysm.client.event.RegisterEntityRenderersEvent;
+import com.elfmcys.ysm.client.gui.GuiModelPreview;
 import com.elfmcys.ysm.client.gui.CustomGuiPlayerEntity;
 import com.elfmcys.ysm.client.gui.GuiModelFraming;
 import com.elfmcys.ysm.client.lang.LanguageManager;
 import com.elfmcys.ysm.client.demand.ModelResourceDemand;
 import com.elfmcys.ysm.model.resource.client.ModelRenderTarget;
 import com.elfmcys.ysm.model.domain.Hash256;
-import com.elfmcys.ysm.util.RenderUtil;
-import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +22,6 @@ import java.util.List;
 
 public final class CatalogTextureButton extends Button
     implements com.elfmcys.ysm.client.demand.ClientDemandCoordinator.CardDisplay, AutoCloseable {
-    private static final int CARD_OVERLAY_Z = 3500;
-
     private final Hash256 modelHash;
     private final String path;
     private final String texture;
@@ -80,29 +76,29 @@ public final class CatalogTextureButton extends Button
     }
 
     @Override
-    public void onPress() {
+    public void onPress(InputWithModifiers input) {
         selection.select(modelHash, path, texture, renderTarget);
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         updateLazyFailure();
         graphics.fillGradient(getX(), getY(), getX() + width, getY() + height, 0xFF434242, 0xFF434242);
         if (renderTarget == null || error != null) {
             var text = error == null ? ".".repeat((int)((Util.getMillis() / 250L) % 4L)) : "!";
-            graphics.drawCenteredString(Minecraft.getInstance().font, text, getX() + width / 2,
+            graphics.centeredText(Minecraft.getInstance().font, Component.literal(text), getX() + width / 2,
                 getY() + (height - 20) / 2, error == null ? 0xFFF3EFE0 : 0xFFFF5555);
         } else {
             renderEntity(graphics);
         }
         renderName(graphics);
         if (isHoveredOrFocused()) {
-            graphics.fillGradient(getX(), getY() + 1, getX() + 1, getY() + height - 1, CARD_OVERLAY_Z, 0xFFF3EFE0,
+            graphics.fillGradient(getX(), getY() + 1, getX() + 1, getY() + height - 1, 0xFFF3EFE0,
                 0xFFF3EFE0);
-            graphics.fillGradient(getX(), getY(), getX() + width, getY() + 1, CARD_OVERLAY_Z, 0xFFF3EFE0, 0xFFF3EFE0);
-            graphics.fillGradient(getX() + width - 1, getY() + 1, getX() + width, getY() + height - 1, CARD_OVERLAY_Z,
+            graphics.fillGradient(getX(), getY(), getX() + width, getY() + 1, 0xFFF3EFE0, 0xFFF3EFE0);
+            graphics.fillGradient(getX() + width - 1, getY() + 1, getX() + width, getY() + height - 1,
                 0xFFF3EFE0, 0xFFF3EFE0);
-            graphics.fillGradient(getX(), getY() + height - 1, getX() + width, getY() + height, CARD_OVERLAY_Z,
+            graphics.fillGradient(getX(), getY() + height - 1, getX() + width, getY() + height,
                 0xFFF3EFE0, 0xFFF3EFE0);
         }
     }
@@ -135,31 +131,22 @@ public final class CatalogTextureButton extends Button
         }
     }
 
-    private void renderEntity(GuiGraphics graphics) {
-        Window window = Minecraft.getInstance().getWindow();
-        double scale = window.getGuiScale();
-        RenderSystem.enableScissor((int)(getX() * scale), (int)(window.getHeight() - ((getY() + height - 20) * scale)),
-            (int)(width * scale), (int)((height - 20) * scale));
-        try {
-            RenderUtil.renderFramedModelInGui(getX(), getY(), width, height - 20,
-                Minecraft.getInstance().getFrameTime(), entity, RegisterEntityRenderersEvent.getPlayerRenderer(), false,
-                true, framing);
-        } finally {
-            RenderSystem.disableScissor();
-        }
+    private void renderEntity(GuiGraphicsExtractor graphics) {
+        GuiModelPreview.framed(graphics, getX(), getY(), width, height - 20,
+            Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true), entity, framing);
     }
 
-    private void renderName(GuiGraphics graphics) {
+    private void renderName(GuiGraphicsExtractor graphics) {
         Font font = Minecraft.getInstance().font;
         var name = renderTarget == null ? texture
             : LanguageManager.getI18n(renderTarget, "files.player.texture.%s".formatted(texture), texture);
         List<FormattedCharSequence> split = font.split(Component.literal(name), 50);
         if (split.size() > 1) {
-            graphics.drawCenteredString(font, split.get(0), getX() + width / 2, getY() + height - 19, 0xF3EFE0);
-            graphics.drawCenteredString(font, split.get(1), getX() + width / 2, getY() + height - 10, 0xF3EFE0);
+            graphics.centeredText(font, split.get(0), getX() + width / 2, getY() + height - 19, 0xFFF3EFE0);
+            graphics.centeredText(font, split.get(1), getX() + width / 2, getY() + height - 10, 0xFFF3EFE0);
         } else {
-            graphics.drawCenteredString(font, Component.literal(name), getX() + width / 2, getY() + height - 15,
-                0xF3EFE0);
+            graphics.centeredText(font, Component.literal(name), getX() + width / 2, getY() + height - 15,
+                0xFFF3EFE0);
         }
     }
 

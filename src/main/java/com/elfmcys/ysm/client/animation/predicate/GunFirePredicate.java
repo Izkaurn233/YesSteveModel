@@ -19,7 +19,7 @@ public class GunFirePredicate implements IAnimationPredicate<CustomHumanoidEntit
         if (entity == null || event.getAnimatableEntity() instanceof IPreviewEntity) {
             return PlayState.STOP;
         }
-        if (!entity.swinging && !entity.isUsingItem()) {
+        if (!entity.isSwinging() && !entity.isUsingItem()) {
             ItemStack mainHandItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
             PlayState result = TACZCompat.playGunOnceAnimation(mainHandItem, event);
             if (result == null) {

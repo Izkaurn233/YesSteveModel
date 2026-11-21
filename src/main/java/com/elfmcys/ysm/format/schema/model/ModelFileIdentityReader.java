@@ -6,7 +6,6 @@ import com.elfmcys.ysm.format.container.AssetContainerView;
 import com.elfmcys.ysm.model.domain.Hash256;
 import com.elfmcys.ysm.model.domain.ModelFileIdentity;
 import com.elfmcys.ysm.version.VersionCompatibility;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -44,7 +43,7 @@ public final class ModelFileIdentityReader {
         if (versionText == null) {
             throw new IOException("Version property not found");
         }
-        if (!supportsVersion(ModelFileConstant.CURRENT_VERSION.toString(), versionText)) {
+        if (!supportsVersion(ModelFileConstant.CURRENT_VERSION, versionText)) {
             throw new UnsupportedEncodingException(
                 String.format("Unsupported model version: \"%s\". Exported by \"%s\"", versionText, vendor));
         }
@@ -57,12 +56,9 @@ public final class ModelFileIdentityReader {
     }
 
     static boolean supportsVersion(String currentText, String candidateText) {
-        return VersionCompatibility.isCompatible(currentText, candidateText, (current, candidate) -> {
-            var supported = new DefaultArtifactVersion(current);
-            var version = new DefaultArtifactVersion(candidate);
-            return version.getMajorVersion() <= supported.getMajorVersion()
-                && version.getMinorVersion() <= supported.getMinorVersion();
-        });
+        return VersionCompatibility.isCompatibleRelease(currentText, candidateText, (supported, candidate) ->
+            candidate.getVersionComponent(0) <= supported.getVersionComponent(0)
+                && candidate.getVersionComponent(1) <= supported.getVersionComponent(1));
     }
 
     private static boolean isLowerHexModelId(String value) {

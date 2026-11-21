@@ -1,7 +1,6 @@
 package com.elfmcys.ysm.client.gui.button;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -18,9 +17,9 @@ public class FlatRatioBox extends AbstractWidget implements IConfigFormsButton {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int pMouseX, int pMouseY, float pPartialTick) {
         graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + maxHeight, 0xef_434242);
-        this.renderScrollingString(graphics, Minecraft.getInstance().font, 2, 0xFFFFFF);
+        this.extractScrollingStringOverContents(graphics.textRenderer(), getMessage(), 2);
     }
 
     @Override

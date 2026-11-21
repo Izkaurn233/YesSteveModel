@@ -1,8 +1,8 @@
 package com.elfmcys.ysm.client.gui;
 
 import com.elfmcys.ysm.model.catalog.source.ModelCatalogSources;
-import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.Blaze3D;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -21,7 +21,7 @@ public class OpenModelFolderScreen extends ModelScreen {
         this.clearWidgets();
         this.addRenderableWidget(
             Button.builder(Component.translatable("gui.yes_steve_model.open_model_folder.open"), b -> {
-                Util.getPlatform().openFile(ModelCatalogSources.customPath().toFile());
+                Blaze3D.openPath(ModelCatalogSources.customPath());
             }).bounds(x, y, 150, 20).build());
         this.addRenderableWidget(Button.builder(Component.translatable("gui.yes_steve_model.model.return"), b -> {
             showScreen(this.screen);
@@ -29,10 +29,9 @@ public class OpenModelFolderScreen extends ModelScreen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
-        renderBackground(graphics);
-        graphics.drawWordWrap(font, Component.translatable("gui.yes_steve_model.open_model_folder.tips"),
-            (width - 400) / 2, height / 2 - 80, 400, 0XFFFFFF);
-        super.render(graphics, pMouseX, pMouseY, pPartialTick);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int pMouseX, int pMouseY, float pPartialTick) {
+        graphics.textWithWordWrap(font, Component.translatable("gui.yes_steve_model.open_model_folder.tips"),
+            (width - 400) / 2, height / 2 - 80, 400, 0xFFFFFFFF);
+        super.extractRenderState(graphics, pMouseX, pMouseY, pPartialTick);
     }
 }

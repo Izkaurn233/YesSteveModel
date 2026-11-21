@@ -1,8 +1,7 @@
 package com.elfmcys.ysm.client.gui.button;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -11,8 +10,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class FlatColorButton extends Button {
-    private static final int TOOLTIP_Z = 4000;
-
     private boolean isSelect = false;
     private List<Component> tooltips;
 
@@ -30,22 +27,14 @@ public class FlatColorButton extends Button {
         return this;
     }
 
-    public void renderToolTip(GuiGraphics graphics, Screen screen, int pMouseX, int pMouseY) {
+    public void renderToolTip(GuiGraphicsExtractor graphics, Screen screen, int pMouseX, int pMouseY) {
         if (this.isHovered && tooltips != null) {
-            graphics.pose().pushPose();
-            try {
-                graphics.pose().translate(0, 0, TOOLTIP_Z);
-                graphics.renderComponentTooltip(screen.getMinecraft().font, tooltips, pMouseX, pMouseY);
-            } finally {
-                graphics.pose().popPose();
-            }
+            graphics.setComponentTooltipForNextFrame(Minecraft.getInstance().font, tooltips, pMouseX, pMouseY);
         }
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Font font = minecraft.font;
+    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float pPartialTick) {
         if (isSelect) {
             graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height,
                 0xff_1E90FF, 0xff_1E90FF);
@@ -63,7 +52,7 @@ public class FlatColorButton extends Button {
             graphics.fillGradient(this.getX(), this.getY() + this.height - 1, this.getX() + this.width,
                 this.getY() + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
         }
-        this.renderScrollingString(graphics, font, 2, 0xF3EFE0);
+        this.extractScrollingStringOverContents(graphics.textRenderer(), getMessage().copy().withColor(0xF3EFE0), 2);
     }
 
     public void setSelect(boolean select) {

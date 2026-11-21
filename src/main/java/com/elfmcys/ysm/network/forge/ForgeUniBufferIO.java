@@ -5,7 +5,6 @@ import com.elfmcys.ysm.buffer.ArrayBuffer;
 import com.elfmcys.ysm.buffer.NativeBuffer;
 import com.elfmcys.ysm.buffer.UniBuffer;
 import io.netty.buffer.ByteBuf;
-import io.netty.util.internal.PlatformDependent;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.lang.ref.Reference;
@@ -19,19 +18,7 @@ public final class ForgeUniBufferIO {
                 target.writeBytes(array.array(), array.arrayOffset(), array.size());
                 return;
             }
-            var nativeBuffer = (NativeBuffer)source;
-            var length = nativeBuffer.size();
-            var index = target.writerIndex();
-            target.ensureWritable(length);
-            if (target.hasMemoryAddress()) {
-                PlatformDependent.copyMemory(nativeBuffer.ptr(), target.memoryAddress() + index, length);
-                target.writerIndex(index + length);
-            } else if (target.hasArray()) {
-                PlatformDependent.copyMemory(nativeBuffer.ptr(), target.array(), target.arrayOffset() + index, length);
-                target.writerIndex(index + length);
-            } else {
-                target.writeBytes(nativeBuffer.nio());
-            }
+            target.writeBytes(source.nio());
         } finally {
             Reference.reachabilityFence(source);
             Reference.reachabilityFence(target);
@@ -59,16 +46,9 @@ public final class ForgeUniBufferIO {
                 || targetOffset > target.size() - length) {
                 throw new IndexOutOfBoundsException();
             }
-            if (source.hasMemoryAddress()) {
-                PlatformDependent.copyMemory(source.memoryAddress() + sourceIndex, target.ptr() + targetOffset, length);
-            } else if (source.hasArray()) {
-                PlatformDependent.copyMemory(source.array(), source.arrayOffset() + sourceIndex,
-                    target.ptr() + targetOffset, length);
-            } else {
-                var view = target.nio();
-                view.position(targetOffset).limit(targetOffset + length);
-                source.getBytes(sourceIndex, view);
-            }
+            var view = target.nio();
+            view.position(targetOffset).limit(targetOffset + length);
+            source.getBytes(sourceIndex, view);
         } finally {
             Reference.reachabilityFence(source);
             Reference.reachabilityFence(target);

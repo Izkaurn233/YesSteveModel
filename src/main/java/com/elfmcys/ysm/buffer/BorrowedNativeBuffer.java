@@ -1,6 +1,6 @@
 package com.elfmcys.ysm.buffer;
 
-import io.netty.util.internal.PlatformDependent;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -26,7 +26,7 @@ public final class BorrowedNativeBuffer implements NativeBuffer {
     private BorrowedNativeBuffer(Object anchor, ByteBuffer data) {
         this.anchor = Objects.requireNonNull(anchor);
         this.data = data;
-        address = PlatformDependent.directBufferAddress(data);
+        address = MemorySegment.ofBuffer(data).address();
     }
 
     /**

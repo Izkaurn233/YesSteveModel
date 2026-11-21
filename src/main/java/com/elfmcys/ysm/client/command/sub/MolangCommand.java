@@ -10,8 +10,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.Supplier;
@@ -33,22 +33,22 @@ public class MolangCommand {
 
     private static final String EXECUTE_NAME = "execute";
 
-    public static LiteralArgumentBuilder<CommandSourceStack> get() {
-        LiteralArgumentBuilder<CommandSourceStack> molang = Commands.literal(MOLANG_NAME);
+    public static LiteralArgumentBuilder<FabricClientCommandSource> get() {
+        LiteralArgumentBuilder<FabricClientCommandSource> molang = ClientCommands.literal(MOLANG_NAME);
 
-        LiteralArgumentBuilder<CommandSourceStack> watch = Commands.literal(WATCH_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> add = Commands.literal(ADD_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> pre = Commands.literal(PRE_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> post = Commands.literal(POST_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> clear = Commands.literal(CLEAR_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> remove = Commands.literal(REMOVE_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> watch = ClientCommands.literal(WATCH_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> add = ClientCommands.literal(ADD_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> pre = ClientCommands.literal(PRE_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> post = ClientCommands.literal(POST_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> clear = ClientCommands.literal(CLEAR_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> remove = ClientCommands.literal(REMOVE_NAME);
 
-        LiteralArgumentBuilder<CommandSourceStack> execute = Commands.literal(EXECUTE_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> execute = ClientCommands.literal(EXECUTE_NAME);
 
-        Supplier<RequiredArgumentBuilder<CommandSourceStack, String>> expName =
-            () -> Commands.argument(EXPRESSION_NAME_NAME, StringArgumentType.string());
-        Supplier<RequiredArgumentBuilder<CommandSourceStack, String>> exp =
-            () -> Commands.argument(EXPRESSION_NAME, StringArgumentType.greedyString()).suggests(ALL_VARS);
+        Supplier<RequiredArgumentBuilder<FabricClientCommandSource, String>> expName =
+            () -> ClientCommands.argument(EXPRESSION_NAME_NAME, StringArgumentType.string());
+        Supplier<RequiredArgumentBuilder<FabricClientCommandSource, String>> exp =
+            () -> ClientCommands.argument(EXPRESSION_NAME, StringArgumentType.greedyString()).suggests(ALL_VARS);
 
         watch
             .then(add
@@ -64,7 +64,7 @@ public class MolangCommand {
     }
 
     @SuppressWarnings("DataFlowIssue")
-    private static int addExpression(CommandContext<CommandSourceStack> ctx, DebugInfo.Phase phase) {
+    private static int addExpression(CommandContext<FabricClientCommandSource> ctx, DebugInfo.Phase phase) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }
@@ -78,7 +78,7 @@ public class MolangCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int removeExpression(CommandContext<CommandSourceStack> ctx) {
+    private static int removeExpression(CommandContext<FabricClientCommandSource> ctx) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }
@@ -91,7 +91,7 @@ public class MolangCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int clearExpression(CommandContext<CommandSourceStack> ctx) {
+    private static int clearExpression(CommandContext<FabricClientCommandSource> ctx) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }
@@ -103,7 +103,7 @@ public class MolangCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int executeMolang(CommandContext<CommandSourceStack> ctx) {
+    private static int executeMolang(CommandContext<FabricClientCommandSource> ctx) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }

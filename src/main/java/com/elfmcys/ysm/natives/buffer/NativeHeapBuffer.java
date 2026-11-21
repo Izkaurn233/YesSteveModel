@@ -1,7 +1,7 @@
 package com.elfmcys.ysm.natives.buffer;
 
 import com.elfmcys.ysm.buffer.NativeStorage;
-import io.netty.util.internal.PlatformDependent;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -36,7 +36,7 @@ public final class NativeHeapBuffer implements NativeStorage {
         var allocated = nAlloc(size, alignment);
         if (allocated == null)
             throw new OutOfMemoryError();
-        base = PlatformDependent.directBufferAddress(allocated);
+        base = MemorySegment.ofBuffer(allocated).address();
         try {
             data = allocated.slice().order(ByteOrder.nativeOrder());
         } catch (RuntimeException | Error failure) {
@@ -58,7 +58,7 @@ public final class NativeHeapBuffer implements NativeStorage {
     public static NativeHeapBuffer adopt(ByteBuffer ownedMem) {
         if (!ownedMem.isDirect())
             throw new IllegalArgumentException("Buffer is not direct");
-        var base = PlatformDependent.directBufferAddress(ownedMem);
+        var base = MemorySegment.ofBuffer(ownedMem.duplicate().position(0)).address();
         ByteBuffer view;
         try {
             view = ownedMem.slice().order(ByteOrder.nativeOrder());
@@ -81,7 +81,7 @@ public final class NativeHeapBuffer implements NativeStorage {
 
     @Override
     public long ptr() {
-        return PlatformDependent.directBufferAddress(data);
+        return MemorySegment.ofBuffer(data).address();
     }
 
     @Override

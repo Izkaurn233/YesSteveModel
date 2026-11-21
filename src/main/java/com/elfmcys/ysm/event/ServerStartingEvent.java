@@ -2,23 +2,17 @@ package com.elfmcys.ysm.event;
 
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.model.service.ServerModelService;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.server.MinecraftServer;
 
-@Mod.EventBusSubscriber
 public class ServerStartingEvent {
-    @SubscribeEvent
-    public static void onServerInit(final ServerAboutToStartEvent event) {
+    public static void onServerInit(MinecraftServer server) {
         if (!YesSteveModel.isAvailable()) {
             return;
         }
-        ServerModelService.start(event.getServer());
+        ServerModelService.start(server);
     }
 
-    @SubscribeEvent
-    public static void onServerStopping(final ServerStoppingEvent event) {
+    public static void onServerStopping(MinecraftServer server) {
         ServerModelService.current().ifPresent(ServerModelService::close);
     }
 }

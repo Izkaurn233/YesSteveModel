@@ -33,7 +33,7 @@ public class CustomVehicleEntity extends AnimatableEntity<Entity> {
     protected String requestedRenderTargetId() {
         var hash = getModelHash();
         return hash == null ? null : ClientModelService.instance()
-            .findRenderTarget(hash, RenderTargetKind.VEHICLE, entity.getType().builtInRegistryHolder().key().location())
+            .findRenderTarget(hash, RenderTargetKind.VEHICLE, entity.getType().builtInRegistryHolder().key().identifier())
             .orElse(null);
     }
 

@@ -18,8 +18,8 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.resources.Identifier;
@@ -32,16 +32,16 @@ import java.util.stream.Collectors;
 public class ClientRootCommand {
     private static final String ROOT_NAME = "ysmclient";
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> root =
-            Commands.literal(ROOT_NAME).requires(source -> CommandUtil.isLocalPlayer(source.getEntity()));
+    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
+        LiteralArgumentBuilder<FabricClientCommandSource> root =
+            ClientCommands.literal(ROOT_NAME).requires(source -> CommandUtil.isLocalPlayer(source.getEntity()));
         root.then(MolangCommand.get());
         root.then(SimpleWatchCommand.get());
         root.then(DebugCommand.get());
         dispatcher.register(root);
     }
 
-    public static final SuggestionProvider<CommandSourceStack> ALL_VARS =
+    public static final SuggestionProvider<FabricClientCommandSource> ALL_VARS =
         SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "vars"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider && Platform.isClient()) {
                 return getTarget().map(cap -> {
@@ -76,7 +76,7 @@ public class ClientRootCommand {
             return Suggestions.empty();
         });
 
-    public static final SuggestionProvider<CommandSourceStack> ALL_CONTROLLERS =
+    public static final SuggestionProvider<FabricClientCommandSource> ALL_CONTROLLERS =
         SuggestionProviders.register(Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "controllers"), (source, builder) -> {
             if (source.getSource() instanceof SharedSuggestionProvider && Platform.isClient()) {
                 return getTarget().map(target -> {

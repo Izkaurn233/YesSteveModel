@@ -128,9 +128,6 @@ public abstract class GeoReplacedEntityRenderer<TEntity extends LivingEntity, T 
 
                 if (renderType != null) {
                     preRender(data, animatableEntity, poseStack, bufferSource, packedLight, packedOverlay, Color.WHITE);
-                    if (bufferSource instanceof com.elfmcys.ysm.client.gui.GuiModelFraming framing
-                        && !framing.apply(data.installation, data.modelState, poseStack))
-                        return;
                     if (animatableEntity.canConsume(data, data.ctx) && renderLayersFirst && !entity.isSpectator()) {
                         renderLayer(poseStack, bufferSource, animatableEntity, data, packedLight, packedOverlay);
                     }

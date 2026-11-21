@@ -447,7 +447,7 @@ public final class SessionProtocolHandler {
 
     private static void refreshGrants(ServerPlayer player, boolean publish) {
         var session = ServerModelService.current().flatMap(service -> service.session(player)).orElse(null);
-        if (session == null) {
+        if (session == null || !session.active()) {
             return;
         }
         var previous = session.authority();

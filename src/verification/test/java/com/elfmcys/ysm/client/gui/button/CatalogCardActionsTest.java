@@ -7,12 +7,14 @@ import com.elfmcys.ysm.model.catalog.source.*;
 import com.elfmcys.ysm.model.domain.*;
 import com.elfmcys.ysm.model.storage.CacheRegion;
 import com.elfmcys.ysm.model.storage.ContentStorageBinding;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class CatalogCardActionsTest {
     @TempDir
@@ -23,7 +25,13 @@ class CatalogCardActionsTest {
         var physical = Files.createDirectory(temp.resolve("PHYSICAL_SECRET"));
         Files.writeString(physical.resolve("ysm.json"), "{}");
         var root = Files.createDirectory(temp.resolve("custom"));
-        var logical = Files.createSymbolicLink(root.resolve("alias"), physical);
+        Path logical;
+        try {
+            logical = Files.createSymbolicLink(root.resolve("alias"), physical);
+        } catch (FileSystemException failure) {
+            assumeTrue(false, () -> "Symbolic link creation is unavailable: " + failure.getReason());
+            throw failure;
+        }
         var key = new ModelSourceKey(new CatalogRootIdentity(CatalogRoot.GLOBAL_AUTH, root), new ModelPath("alias"),
             ModelSourceKind.CURRENT_RAW_DIRECTORY);
         var binding = ContentStorageBinding.local(new CacheRegion(temp.resolve("cache")),

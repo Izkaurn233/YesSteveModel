@@ -1,6 +1,6 @@
 # 扩展模组兼容性检测
 
-YSM 主 JAR 内置 `@YsmExtension`、`@YsmEventHandler` 和兼容性注解处理器。处理器在 `javac` 完成每个 class 的生成后读取实际字节码，收集扩展入口依赖的 YSM 类、方法、构造器和字段，并生成不直接链接 YSM 的启动期 checker。扩展最终仍须经过 Forge/NeoForge 的标准 reobf；不需要 YSM 专用 Gradle 插件或额外的 Processor 制品。
+YSM 主 JAR 内置 `@YsmExtension`、`@YsmEventHandler` 和兼容性注解处理器。处理器在 `javac` 完成每个 class 的生成后读取实际字节码，收集扩展入口依赖的 YSM 类、方法、构造器和字段，并生成不直接链接 YSM 的启动期 checker。Minecraft 26.3 Fabric 版使用游戏发布的名称，扩展可使用同一份正常发布的 YSM 主 JAR 参与编译和注解处理。
 
 ## 接入
 
@@ -10,22 +10,19 @@ YSM 主 JAR 内置 `@YsmExtension`、`@YsmEventHandler` 和兼容性注解处理
 def ysmDependency = "com.elfmcys.ysm:ysm:<ysm-version>"
 
 dependencies {
-    modCompileOnly ysmDependency
+    compileOnly ysmDependency
     annotationProcessor ysmDependency
 }
 ```
 
-上例的 `modCompileOnly` 适用于 NeoForge ModDev/LegacyForge。使用 ForgeGradle 时，将该行换成 `compileOnly fg.deobf(ysmDependency)`；`annotationProcessor` 必须使用未经 `fg.deobf` 包装的同一主制品。这里的主制品是正常发布的无 classifier 最终 JAR，不能改用开发期 `raw` JAR。Processor 所需 ASM 已用 YSM 私有包名内嵌，不依赖扩展项目或 Forge 在 Processor classpath 上额外提供 ASM。
+使用正常发布的无 classifier 最终 JAR。Processor 所需 ASM 已用 YSM 私有包名内嵌。
 
-扩展的 `mods.toml` 仍应把 YSM 声明为可选且排在本模组之前初始化：
+可选扩展可在 `fabric.mod.json` 中声明 `suggests`。
 
-```toml
-[[dependencies.<extension-mod-id>]]
-modId="ysm"
-versionRange = "[3.0,)"
-mandatory=false
-ordering="AFTER"
-side="BOTH"
+```json
+{
+  "suggests": { "ysm": "*" }
+}
 ```
 
 处理器不会修改或验证模组元数据。
@@ -57,7 +54,7 @@ if (!result.isCompatible() || !result.coverageComplete()) {
 
 同一发布主 JAR 同时提供公共注解与 JDK-only `UnifiedDeclarationProcessor`；无需额外 processor 制品。auto `@YsmMolangExtension` 自带类级 CLIENT 完整 checker，成员不追加依赖。签名、值和生命周期见[共同声明契约](architecture/animation/molang-declarations.md)。
 
-默认 auto 由 YSM 收集、前检并冻结。选择 `mode = MolangAdmissionMode.MANUAL` 时，独立 bootstrap 完成自由前检后，在 client 服务冻结前提交：
+默认 auto 由 YSM 从 Fabric 模组根目录读取生成的声明资源，经来源核对和前检后冻结。选择 `mode = MolangAdmissionMode.MANUAL` 时，独立 bootstrap 完成自由前检后，在 client 服务冻结前提交：
 
 ```java
 String resource = "META-INF/ysm/molang/com.example.Adapter.bin";
@@ -66,6 +63,11 @@ MolangDeclarations.submit(resource, adapterSourceUrl, compatible, detail);
 
 `adapterSourceUrl` 是该 AP resource 的 URL，不是实现类 Class；bootstrap 仍不得提前链接实现/optional subject。票据不绕过 source ownership、共同声明验证或 all-of 依赖；同类未提交/重复、auto/manual 双路、冲突及冻结后提交均拒绝，不覆盖先到者。接纳失败不发布对应 Molang 符号。完整 checker 算法与事件 handler 契约不因声明收敛改变。
 
+## 下载页入口
+
+Fabric 客户端可在 `fabric.mod.json` 的 `entrypoints` 中注册 `ysm:download_screen`，实现
+`DownloadScreenInterModEvent.Factory`。YSM 在用户打开下载页时将当前模型页交给工厂，使用首个返回有效界面的入口。
+
 ## 自动注册事件处理器
 
 需要监听 YSM 自有事件总线时，可用 `@YsmEventHandler` 代替类级
@@ -73,8 +75,8 @@ MolangDeclarations.submit(resource, adapterSourceUrl, compatible, detail);
 
 ```java
 @YsmEventHandler(side = Side.CLIENT)
-public final class MyMod {
-    @SubscribeEvent
+public final class MyYsmHandler {
+    @EventTarget
     public void onRender(RenderModelEvent event) {
         //
     }
@@ -85,7 +87,17 @@ public final class MyMod {
 成员类，并要求 public 无参构造器。它在编译期完全继承类级 `@YsmExtension`
 的检测语义，因此同一个类不能再同时标注类级 `@YsmExtension`。
 
-Forge 完成模组加载时，YSM 从扫描元数据中取得处理器类名，此时不会加载处理器类。
+在扩展的 `fabric.mod.json` 中声明处理器的二进制类名。
+
+```json
+{
+  "custom": {
+    "ysm:event_handlers": ["com.example.MyYsmHandler"]
+  }
+}
+```
+
+YSM 在主入口读取元数据，此时不会加载处理器类。
 YSM 先调用对应 `<ClassName>CompatibilityChecker.check()`：
 
 - `COMPATIBLE`：实例化并注册；
@@ -96,9 +108,9 @@ YSM 先调用对应 `<ClassName>CompatibilityChecker.check()`：
 每个处理器独立失败；一个处理器的链接、构造或注册异常不会阻止其他处理器继续注册。
 模组主类的 `registerEventHandler(Object)` 仍保留，供确实需要自行控制实例生命周期的代码使用。
 
-自动注册目标是 YSM 的模组事件总线，不是 `MinecraftForge.EVENT_BUS`。注册发生在
-`FMLLoadCompleteEvent` 期间，因此处理器只会收到此后发布的 YSM 运行时事件，不会补收
-已经发生的 Forge/FML 生命周期事件，也不会收到触发注册的这次 load-complete 事件。
+自动注册目标是 YSM 的 `EventManager`。处理器从注册成功起接收 YSM 运行时事件。
+
+26.3 的 `RenderModelEvent` 和 `RenderLayerEvent` 通过 `collector()` 提供 `SubmitNodeCollector`。扩展应重新编译，并在事件回调内使用 collector、姿态和 `renderData()`。若提交延迟执行的自定义几何，回调应使用自行保留的几何数据。
 
 结果状态包括：
 

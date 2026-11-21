@@ -1,7 +1,7 @@
 package com.elfmcys.ysm.natives.legacy;
 
 import com.elfmcys.ysm.buffer.NativeBuffer;
-import io.netty.util.internal.PlatformDependent;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 
 final class LegacyPayloadBuffer implements NativeBuffer {
@@ -26,7 +26,7 @@ final class LegacyPayloadBuffer implements NativeBuffer {
     @Override
     public long ptr() {
         owner.get();
-        return PlatformDependent.directBufferAddress(data);
+        return MemorySegment.ofBuffer(data).address();
     }
 
     @Override

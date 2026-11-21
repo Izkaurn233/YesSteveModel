@@ -1,41 +1,40 @@
 package com.elfmcys.ysm.client.event;
 
-import net.fabricmc.api.EnvType;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.client.gui.DownloadScreen;
 import com.elfmcys.ysm.client.gui.PlayerModelScreen;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraftforge.api.distmarker.Dist;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 @Environment(EnvType.CLIENT)
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = YesSteveModel.MOD_ID, value = Dist.CLIENT)
-public class DownloadScreenInterModEvent {
-    private static final String DOWNLOAD_SCREEN_METHOD = "DownloadScreen";
-    private static @Nullable Screen DOWNLOAD_SCREEN;
+public final class DownloadScreenInterModEvent {
+    private static final String ENTRYPOINT = "ysm:download_screen";
 
-    @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onInterModProcess(InterModProcessEvent event) {
-        if (!YesSteveModel.isAvailable()) {
-            return;
-        }
-        InterModComms.getMessages(YesSteveModel.MOD_ID).findFirst().ifPresent(message -> {
-            String method = message.method();
-            if (DOWNLOAD_SCREEN_METHOD.equals(method) && message.messageSupplier().get() instanceof Screen screen) {
-                DOWNLOAD_SCREEN = screen;
-            }
-        });
-    }
+    private DownloadScreenInterModEvent() {}
 
     public static void openDownloadScreen(PlayerModelScreen modelScreen) {
-        modelScreen.showScreen(Objects.requireNonNullElseGet(DOWNLOAD_SCREEN, () -> new DownloadScreen(modelScreen)));
+        if (!modelScreen.hasCurrentWorld()) {
+            return;
+        }
+        for (var entrypoint : FabricLoader.getInstance().getEntrypointContainers(ENTRYPOINT, Factory.class)) {
+            try {
+                var screen = entrypoint.getEntrypoint().create(modelScreen);
+                if (screen != null) {
+                    modelScreen.showScreen(screen);
+                    return;
+                }
+            } catch (RuntimeException | LinkageError failure) {
+                YesSteveModel.LOGGER.error("Failed to open a download screen from a Fabric entrypoint", failure);
+            }
+        }
+        modelScreen.showScreen(new DownloadScreen(modelScreen));
+    }
+
+    @FunctionalInterface
+    public interface Factory {
+        @Nullable Screen create(PlayerModelScreen parent);
     }
 }

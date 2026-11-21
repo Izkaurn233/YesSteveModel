@@ -5,14 +5,14 @@ import com.elfmcys.ysm.util.EquipmentUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.tags.ITagManager;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.List;
@@ -55,11 +55,7 @@ public class ConditionArmor {
             if (!(Identifier.tryParse(id) != null)) {
                 return;
             }
-            ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-            if (tags == null) {
-                return;
-            }
-            TagKey<Item> tagKey = tags.createTagKey(Identifier.parse(id));
+            TagKey<Item> tagKey = TagKey.create(Registries.ITEM, Identifier.parse(id));
             tagTest.computeIfAbsent(type, t -> new ReferenceArrayList<>()).add(tagKey);
         }
     }
@@ -85,7 +81,7 @@ public class ConditionArmor {
         }
         Set<Identifier> idListTest = idTest.get(slot);
         ItemStack item = EquipmentUtil.getEquippedItem(livingEntity, slot);
-        Identifier registryName = ForgeRegistries.ITEMS.getKey(item.getItem());
+        Identifier registryName = BuiltInRegistries.ITEM.getKey(item.getItem());
         if (registryName == null) {
             return EMPTY;
         }
@@ -104,10 +100,6 @@ public class ConditionArmor {
         }
         List<TagKey<Item>> tagListTest = tagTest.get(slot);
         ItemStack item = EquipmentUtil.getEquippedItem(livingEntity, slot);
-        ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-        if (tags == null) {
-            return EMPTY;
-        }
         return tagListTest.stream().filter(item::is).findFirst()
             .map(itemTagKey -> slot.getName() + "#" + itemTagKey.location()).orElse(EMPTY);
     }

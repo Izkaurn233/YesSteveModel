@@ -10,6 +10,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.selector.EntitySelector;
@@ -25,7 +26,7 @@ public class PlayAnimationCommand {
 
     public static LiteralArgumentBuilder<CommandSourceStack> get() {
         LiteralArgumentBuilder<CommandSourceStack> play =
-            Commands.literal(PLAY_NAME).requires(src -> CommandUtil.hasPermission(src, 2));
+            Commands.literal(PLAY_NAME).requires(src -> CommandUtil.hasPermission(src, Permissions.COMMANDS_GAMEMASTER));
         RequiredArgumentBuilder<CommandSourceStack, EntitySelector> targets =
             Commands.argument(TARGETS_NAME, EntityArgument.players());
         RequiredArgumentBuilder<CommandSourceStack, String> animation =

@@ -11,22 +11,22 @@ import com.elfmcys.ysm.geckolib3.geo.CustomTranslucentRenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraftforge.common.MinecraftForge;
 
 public class CustomFirstPersonArmRenderer {
     private CustomFirstPersonArmEntity armEntity = null;
 
     public boolean render(LocalPlayer player, PlayerAnimatableCapability cap, HumanoidArm arm, PoseStack poseStack,
-        MultiBufferSource bufferSource, int packedLight, float partialTick) {
-        return render(player, cap, FirstPersonPart.forArm(arm), poseStack, bufferSource, packedLight,
+        SubmitNodeCollector collector, CameraRenderState camera, int packedLight, float partialTick) {
+        return render(player, cap, FirstPersonPart.forArm(arm), poseStack, collector, camera, packedLight,
             OverlayTexture.NO_OVERLAY, partialTick);
     }
 
     public boolean render(LocalPlayer player, PlayerAnimatableCapability cap, FirstPersonPart part, PoseStack poseStack,
-        MultiBufferSource bufferSource, int packedLight, int overlay, float partialTick) {
+        SubmitNodeCollector collector, CameraRenderState camera, int packedLight, int overlay, float partialTick) {
         if (!canRender(player, cap)) {
             release();
             return false;
@@ -47,7 +47,7 @@ public class CustomFirstPersonArmRenderer {
                 poseStack.translate(part == FirstPersonPart.LEFT_ARM ? 0.25 : -0.25, 1.8, 0);
                 poseStack.scale(-1, -1, 1);
             }
-            var consumed = owner.renderPart(prepared, () -> {
+            var consumed = owner.submitPart(prepared, () -> {
                 var renderEvent = new SpecialPlayerRenderEvent(player, cap, owner.getInstalledModelId());
                 if (com.elfmcys.ysm.YesSteveModel.postEvent(renderEvent))
                     return null;
@@ -55,8 +55,8 @@ public class CustomFirstPersonArmRenderer {
                     return null;
                 var texture = renderEvent.getTextureLocationOverride() == null ? owner.getTextureLocation()
                     : renderEvent.getTextureLocationOverride();
-                return bufferSource.getBuffer(CustomTranslucentRenderType.create(texture));
-            }, poseStack.last(), packedLight, overlay, Color.WHITE.getColor());
+                return CustomTranslucentRenderType.create(texture);
+            }, poseStack, collector, camera, packedLight, overlay, Color.WHITE.getColor());
             if (consumed && part != FirstPersonPart.BACKGROUND) {
                 owner.countRender();
             }

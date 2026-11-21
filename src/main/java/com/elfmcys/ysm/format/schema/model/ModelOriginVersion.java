@@ -1,7 +1,8 @@
 package com.elfmcys.ysm.format.schema.model;
 
 import it.unimi.dsi.fastutil.objects.*;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 
 import java.util.Collections;
 import java.util.stream.IntStream;
@@ -17,8 +18,8 @@ public final class ModelOriginVersion {
             "2.4.2-snapshot-32", "2.4.2-snapshot-35", "2.4.2-snapshot-37", "2.4.2-snapshot-39", "2.4.2-snapshot-40",
             "2.4.2-snapshot-41", "2.4.2-snapshot-45", "2.5.0", "2.5.2-snapshot-2", "2.5.2",
             "2.5.4-snapshot-2", "2.5.4-snapshot-3", "2.6.0", "2.7.0", CURRENT_RELEASE}));
-    private static final ReferenceList<DefaultArtifactVersion> RELEASE_VERSIONS = ReferenceLists.unmodifiable(ReferenceArrayList.wrap(
-            RELEASES.stream().map(DefaultArtifactVersion::new).toArray(DefaultArtifactVersion[]::new)));
+    private static final ReferenceList<Version> RELEASE_VERSIONS = ReferenceLists.unmodifiable(ReferenceArrayList.wrap(
+            RELEASES.stream().map(ModelOriginVersion::parseRelease).toArray(Version[]::new)));
 
     public static final int LEGACY = 0;
     public static final int CURRENT = RELEASES.size() - 1;
@@ -46,11 +47,24 @@ public final class ModelOriginVersion {
     public static int fromModVersion(String version) {
         if (version.isBlank())
             return CURRENT;
-        var exact = REVERSE_MAP.getOrDefault(version, -1);
+        var release = version.split("\\+", 2)[0];
+        var exact = REVERSE_MAP.getOrDefault(release, -1);
         if (exact >= 0)
             return exact;
-        var parsed = new DefaultArtifactVersion(version.split("\\+", 2)[0]);
-        var index = Collections.binarySearch(RELEASE_VERSIONS, parsed);
+        if (release.equals("3.0-dev") || release.startsWith("3.0-dev-"))
+            return CURRENT;
+        if (release.isEmpty())
+            return LEGACY;
+        var index = Collections.binarySearch(RELEASE_VERSIONS, parseRelease(release));
         return index >= 0 ? index : Math.max(LEGACY, -index - 2);
+    }
+
+    static Version parseRelease(String release) {
+        try {
+            // Historical snapshot numbers are ordered numerically by Molang behavior level.
+            return Version.parse(release.replace("-snapshot-", "-snapshot."));
+        } catch (VersionParsingException failure) {
+            throw new IllegalArgumentException("Invalid historical release: " + release, failure);
+        }
     }
 }

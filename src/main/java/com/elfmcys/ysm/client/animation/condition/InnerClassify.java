@@ -4,6 +4,7 @@ import com.elfmcys.ysm.client.compat.slashblade.SlashBladeCompat;
 import com.elfmcys.ysm.init.ModItemTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.*;
 
 public class InnerClassify {
@@ -24,19 +25,19 @@ public class InnerClassify {
         if (SlashBladeCompat.isSlashBladeItem(itemInHand)) {
             return "slashblade";
         }
-        if (item instanceof SwordItem || itemInHand.is(ModItemTags.SWORDS)) {
+        if (itemInHand.is(ItemTags.SWORDS) || itemInHand.is(ModItemTags.SWORDS)) {
             return "sword";
         }
-        if (item instanceof AxeItem || itemInHand.is(ModItemTags.AXES)) {
+        if (itemInHand.is(ItemTags.AXES) || itemInHand.is(ModItemTags.AXES)) {
             return "axe";
         }
-        if (item instanceof PickaxeItem || itemInHand.is(ModItemTags.PICKAXES)) {
+        if (itemInHand.is(ItemTags.PICKAXES) || itemInHand.is(ModItemTags.PICKAXES)) {
             return "pickaxe";
         }
-        if (item instanceof ShovelItem || itemInHand.is(ModItemTags.SHOVELS)) {
+        if (itemInHand.is(ItemTags.SHOVELS) || itemInHand.is(ModItemTags.SHOVELS)) {
             return "shovel";
         }
-        if (item instanceof HoeItem || itemInHand.is(ModItemTags.HOES)) {
+        if (itemInHand.is(ItemTags.HOES) || itemInHand.is(ModItemTags.HOES)) {
             return "hoe";
         }
         if (item instanceof ShieldItem || itemInHand.is(ModItemTags.SHIELDS)) {

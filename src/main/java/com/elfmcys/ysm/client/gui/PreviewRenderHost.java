@@ -1,6 +1,5 @@
 package com.elfmcys.ysm.client.gui;
 
-import com.elfmcys.ysm.client.event.RegisterEntityRenderersEvent;
 import com.elfmcys.ysm.client.animation.AnimationRegister;
 import com.elfmcys.ysm.model.resource.client.AcquireResult;
 import com.elfmcys.ysm.model.resource.client.ModelRenderTarget;
@@ -8,13 +7,21 @@ import com.elfmcys.ysm.model.resource.client.ModelResourcePurpose;
 import com.elfmcys.ysm.model.resource.client.ResourceLease;
 import com.elfmcys.ysm.model.resource.client.ResourceRequest;
 import com.elfmcys.ysm.proto.mixel.manifest.info.SettingsProto;
-import com.elfmcys.ysm.util.RenderUtil;
-import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.textures.GpuTexture;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexSorting;
+
 import net.minecraft.client.Minecraft;
-import org.joml.Matrix4f;
+import net.minecraft.client.renderer.Projection;
+import net.minecraft.client.renderer.ProjectionMatrixBuffer;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import org.joml.Vector4f;
 
 /** Draws one already-published player target into a private host framebuffer. */
 public final class PreviewRenderHost {
@@ -49,97 +56,79 @@ public final class PreviewRenderHost {
 
     private static NativeImage renderEntity(CustomGuiPlayerEntity entity, ModelRenderTarget target) {
         var minecraft = Minecraft.getInstance();
-        var mainTarget = minecraft.getMainRenderTarget();
-        var previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
-        VertexSorting previousSorting = RenderSystem.getVertexSorting();
-        var modelView = RenderSystem.getModelViewStack();
-        TextureTarget offscreen = null;
-        Throwable primaryFailure = null;
-        modelView.pushPose();
-        try {
-            modelView.setIdentity();
-            // GUI model transforms assume a camera at Z=-2000 within the 1000..3000 depth range.
-            modelView.translate(0.0D, 0.0D, -2_000.0D);
-            RenderSystem.applyModelViewMatrix();
-            RenderSystem.setProjectionMatrix(
-                new Matrix4f().setOrtho(0.0F, WIDTH / GUI_SCALE, HEIGHT / GUI_SCALE, 0.0F, 1_000.0F, 3_000.0F),
-                VertexSorting.ORTHOGRAPHIC_Z);
+        var input = GuiFrameInput.capture(entity.getEntity(),
+            minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(true),
+            disablePreviewRotation(target.info().getSettings()), true, false, false, 0);
+        var nodes = GuiModelPreview.capture(entity, input, null, null, WIDTH, HEIGHT,
+            HEIGHT / 2.0F + 20.0F * GUI_SCALE, 30.0F, GUI_SCALE);
+        if (nodes == null) {
+            throw new IllegalStateException("The preview model could not be prepared");
+        }
 
-            offscreen = new TextureTarget(WIDTH, HEIGHT, true, Minecraft.ON_OSX);
-            offscreen.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-            offscreen.clear(Minecraft.ON_OSX);
-            offscreen.bindWrite(true);
-            RenderUtil.renderModelInGui(WIDTH / GUI_SCALE / 2.0F, HEIGHT / GUI_SCALE / 2.0F + 20.0F, 30.0F,
-                minecraft.getFrameTime(), entity, RegisterEntityRenderersEvent.getPlayerRenderer(),
-                disablePreviewRotation(target.info().getSettings()), true);
-            return readPixels(offscreen);
-        } catch (RuntimeException | Error failure) {
-            primaryFailure = failure;
-            throw failure;
+        var projection = new Projection();
+        projection.setupOrtho(-1000, 1000, WIDTH, HEIGHT, true);
+        var device = RenderSystem.getDevice();
+        int attachment = GpuTexture.USAGE_RENDER_ATTACHMENT;
+        var view = RenderSystem.getModelViewStack();
+        var previousProjection = RenderSystem.getProjectionMatrixBuffer();
+        var previousProjectionType = RenderSystem.getProjectionType();
+        view.pushMatrix();
+        try (var matrixBuffer = new ProjectionMatrixBuffer("YSM preview");
+             var color = device.createTexture("YSM preview color", attachment | GpuTexture.USAGE_COPY_SRC,
+                 GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+             var colorView = device.createTextureView(color);
+             var depth = device.createTexture("YSM preview depth", attachment, GpuFormat.D32_FLOAT, WIDTH, HEIGHT, 1, 1);
+             var depthView = device.createTextureView(depth)) {
+            view.identity();
+            RenderSystem.setProjectionMatrix(matrixBuffer.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
+            minecraft.gameRenderer.lighting().setupFor(Lighting.Entry.ENTITY_IN_UI);
+            var encoder = device.createCommandEncoder();
+            try (var frame = minecraft.gameRenderer.featureRenderDispatcher().prepareFrame(nodes);
+                 var pass = encoder.createRenderPass(() -> "YSM model preview",
+                     colorView, Optional.of(new Vector4f()), depthView, OptionalDouble.of(0))) {
+                RenderSystem.bindDefaultUniforms(pass);
+                FeatureRenderDispatcher.renderAllFeatures(pass, frame);
+            }
+            try (var buffer = device.createBuffer(() -> "YSM preview readback",
+                GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, (long) WIDTH * HEIGHT * Integer.BYTES)) {
+                encoder.copyTextureToBuffer(color, buffer, 0, () -> {}, 0);
+                try (var fence = encoder.createFence()) {
+                    encoder.submit();
+                    if (!fence.awaitCompletion(5_000_000_000L)) {
+                        throw new IllegalStateException("YSM preview readback did not complete");
+                    }
+                }
+                return readPixels(buffer);
+            }
         } finally {
-            Throwable cleanupFailure = null;
-            if (offscreen != null) {
-                try {
-                    offscreen.destroyBuffers();
-                } catch (RuntimeException | Error failure) {
-                    cleanupFailure = failure;
-                }
-            }
-            try {
-                mainTarget.bindWrite(true);
-            } catch (RuntimeException | Error failure) {
-                cleanupFailure = append(cleanupFailure, failure);
-            }
-            try {
-                RenderSystem.setProjectionMatrix(previousProjection, previousSorting);
-            } catch (RuntimeException | Error failure) {
-                cleanupFailure = append(cleanupFailure, failure);
-            }
-            try {
-                modelView.popPose();
-                RenderSystem.applyModelViewMatrix();
-            } catch (RuntimeException | Error failure) {
-                cleanupFailure = append(cleanupFailure, failure);
-            }
-            if (cleanupFailure != null) {
-                if (primaryFailure != null) {
-                    primaryFailure.addSuppressed(cleanupFailure);
-                } else if (cleanupFailure instanceof Error error) {
-                    throw error;
-                } else {
-                    throw (RuntimeException)cleanupFailure;
-                }
-            }
+            view.popMatrix();
+            RenderSystem.setProjectionMatrix(previousProjection, previousProjectionType);
+            minecraft.gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_3D);
         }
     }
 
-    private static NativeImage readPixels(TextureTarget target) {
-        var pixels = new NativeImage(WIDTH, HEIGHT, false);
-        try {
-            RenderSystem.bindTexture(target.getColorTextureId());
-            // Vanilla screenshot readback discards alpha, including the transparent clear color.
-            pixels.downloadTexture(0, false);
-            pixels.flipY();
-            return pixels;
-        } catch (RuntimeException | Error failure) {
-            pixels.close();
-            throw failure;
+    private static NativeImage readPixels(GpuBuffer buffer) {
+        try (var mapped = buffer.map(true, false)) {
+            var pixels = new NativeImage(WIDTH, HEIGHT, false);
+            try {
+                var bytes = mapped.data();
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int x = 0; x < WIDTH; x++) {
+                        pixels.setPixelABGR(x, HEIGHT - y - 1, bytes.getInt((x + y * WIDTH) * Integer.BYTES));
+                    }
+                }
+                return pixels;
+            } catch (RuntimeException | Error failure) {
+                pixels.close();
+                throw failure;
+            }
         }
     }
 
     static boolean disablePreviewRotation(SettingsProto settings) {
-        // An authored GUI pose may supply its own orientation; idle needs the ordinary view instead.
         var customPreview = settings.previewAnimation()
             .filter(name -> !name.isBlank() && !name.equals(AnimationRegister.IDLE)).isPresent();
         return settings.disablePreviewRotation() && !customPreview;
-    }
-
-    private static Throwable append(Throwable failure, Throwable next) {
-        if (failure == null) {
-            return next;
-        }
-        failure.addSuppressed(next);
-        return failure;
     }
 
     private record BorrowedTargetLease(ResourceRequest request, ModelRenderTarget target) implements ResourceLease {

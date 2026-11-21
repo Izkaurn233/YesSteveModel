@@ -6,11 +6,10 @@
 
 | 进入窗口 | 当前责任映射 |
 |---|---|
-| 模组构造 | `NativeLibUtil.load()` 决定 native 能力是否允许 Java 业务继续初始化 |
-| Common setup 的 `enqueueWork` | `ModelRuntime` 与 `ModelSystem` 组装 builtin、storage、初始 Catalog 和 server runtime；dedicated 激活 Catalog |
-| Client setup 的 `enqueueWork` | `ClientStartup` 固定兼容能力和 locator；`ClientModelService.start` 建立私有 candidate，完成 required 后移交并发布 |
-| `ServerAboutToStartEvent` | `ServerModelService` 属于本次游戏服务；停止事件关闭该服务 |
-| `LoggingIn` / `LoggingOut` | `ClientSessionRuntime` 按 exact `Connection` 建立与撤销 session；`beginConnection()` 先尝试 reload |
+| Fabric 主入口 | `NativeLibUtil.load()` 决定 native 能力是否允许 Java 业务继续初始化。`ModelRuntime` 与 `ModelSystem` 组装 builtin、storage、初始 Catalog 和 server runtime。Dedicated 激活 Catalog。 |
+| `ClientLifecycleEvents.CLIENT_STARTED` | `ClientStartup` 固定兼容能力和 locator。`ClientModelService.start` 建立私有 candidate，完成 required 后移交并发布。 |
+| `ServerLifecycleEvents.SERVER_STARTING` 与 `SERVER_STOPPING` | 为本次游戏服务建立和关闭 `ServerModelService`。 |
+| `ClientPlayConnectionEvents.JOIN` 与 `DISCONNECT` | `ClientSessionRuntime` 按 exact `Connection` 建立与撤销 session。`beginConnection()` 先尝试 reload。 |
 
 这些窗口不额外假定第三方监听器顺序。客户端服务持有启动时的 `ModelSystem`。Required 准备使用专用容量，render owner 在未发布服务的启动窗口用 `managedBlock` 推进宿主交接。失败传播原始 cause；普通 activation 失败归 Catalog 诊断。
 

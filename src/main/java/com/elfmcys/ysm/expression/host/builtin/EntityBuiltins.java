@@ -13,7 +13,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +113,7 @@ public final class EntityBuiltins implements EntityComponent<Entity> {
     public static boolean isEating(MolangContextView<Entity> context) {
 
         var living = living(context.subject());
-        return living != null && living.getUseItem().getUseAnimation() == UseAnim.EAT;
+        return living != null && living.getUseItem().getUseAnimation() == ItemUseAnimation.EAT;
     }
 
     @BuiltinFunction(value = "is_in_water", effect = com.elfmcys.ysm.api.molang.MolangEffect.CONTEXT)
@@ -164,7 +164,7 @@ public final class EntityBuiltins implements EntityComponent<Entity> {
     @BuiltinFunction(value = "time_stamp", effect = com.elfmcys.ysm.api.molang.MolangEffect.CONTEXT)
     public static float timeStamp(MolangContextView<Entity> context) {
 
-        return context.subject().level().getDayTime();
+        return context.subject().level().getOverworldClockTime();
     }
 
     @BuiltinFunction(value = "yaw_speed", effect = com.elfmcys.ysm.api.molang.MolangEffect.CONTEXT)
@@ -179,7 +179,7 @@ public final class EntityBuiltins implements EntityComponent<Entity> {
         effect = com.elfmcys.ysm.api.molang.MolangEffect.CONTEXT)
     public static float elytraRotZ(MolangContextView<AbstractClientPlayer> context) {
 
-        return (float)Math.toDegrees(context.subject().elytraRotZ);
+        return (float)Math.toDegrees(context.subject().elytraAnimationState.getRotZ(1.0F));
     }
 
     @BuiltinFunction(value = "fps", namespace = "ysm", effect = com.elfmcys.ysm.api.molang.MolangEffect.CONTEXT)

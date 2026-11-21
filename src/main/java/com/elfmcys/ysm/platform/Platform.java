@@ -6,7 +6,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * Loader facts that Forge exposed through {@code FMLEnvironment}, {@code FMLPaths} and {@code ModList}.
@@ -54,6 +56,15 @@ public final class Platform {
     /** Version string of an installed mod; empty when the mod is absent. */
     public static Optional<String> modVersion(String modId) {
         return mod(modId).map(container -> container.getMetadata().getVersion().getFriendlyString());
+    }
+
+    public static Map<String, String> modVersions() {
+        var versions = new TreeMap<String, String>();
+        for (var mod : FabricLoader.getInstance().getAllMods()) {
+            var metadata = mod.getMetadata();
+            versions.put(metadata.getId(), metadata.getVersion().getFriendlyString());
+        }
+        return Map.copyOf(versions);
     }
 
     /** Replaces {@code ModList.get().getModFileById(MOD_ID).versionString()}. */

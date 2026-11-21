@@ -2,13 +2,13 @@ package com.elfmcys.ysm.client.animation.condition;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.tags.ITagManager;
 
 public class ConditionalVehicle {
     private static final String EMPTY = "";
@@ -32,11 +32,7 @@ public class ConditionalVehicle {
             idTest.add(Identifier.parse(substring));
         }
         if (name.startsWith(tagPre) && (Identifier.tryParse(substring) != null)) {
-            ITagManager<EntityType<?>> tags = ForgeRegistries.ENTITY_TYPES.tags();
-            if (tags == null) {
-                return;
-            }
-            TagKey<EntityType<?>> tagKey = tags.createTagKey(Identifier.parse(substring));
+            TagKey<EntityType<?>> tagKey = TagKey.create(Registries.ENTITY_TYPE, Identifier.parse(substring));
             tagTest.add(tagKey);
         }
     }
@@ -57,7 +53,7 @@ public class ConditionalVehicle {
         if (idTest.isEmpty()) {
             return EMPTY;
         }
-        Identifier registryName = ForgeRegistries.ENTITY_TYPES.getKey(vehicle.getType());
+        Identifier registryName = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
         if (registryName == null) {
             return EMPTY;
         }
@@ -71,11 +67,7 @@ public class ConditionalVehicle {
         if (tagTest.isEmpty()) {
             return EMPTY;
         }
-        ITagManager<EntityType<?>> tags = ForgeRegistries.ENTITY_TYPES.tags();
-        if (tags == null) {
-            return EMPTY;
-        }
-        return tagTest.stream().filter(tag -> vehicle.getType().is(tag)).findFirst()
+        return tagTest.stream().filter(tag -> vehicle.getType().builtInRegistryHolder().is(tag)).findFirst()
             .map(itemTagKey -> tagPre + itemTagKey.location()).orElse(EMPTY);
     }
 }

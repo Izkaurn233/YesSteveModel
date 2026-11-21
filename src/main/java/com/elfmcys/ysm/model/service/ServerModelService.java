@@ -14,6 +14,8 @@ import com.elfmcys.ysm.model.session.server.ServerModelSession;
 import com.elfmcys.ysm.model.storage.PreviewStorage;
 import com.elfmcys.ysm.model.resource.server.ServerResourceRuntime;
 import com.elfmcys.ysm.network.NetworkHandler;
+import com.elfmcys.ysm.platform.Platform;
+import com.elfmcys.ysm.platform.network.Connections;
 import com.elfmcys.ysm.network.dispatch.ResourceDispatchWorker;
 import com.elfmcys.ysm.network.dispatch.ServerAssetTransfers;
 import com.elfmcys.ysm.network.dispatch.ServerPreviewWork;
@@ -36,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import net.minecraft.network.Connection;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -62,9 +65,9 @@ public final class ServerModelService implements AutoCloseable {
         serverResources = system.serverResources();
         dispatch = new ResourceDispatchWorker(ServerModelService::dispatchSettings);
         dispatch.start();
-        exports = server.isDedicatedServer() ? null : net.minecraftforge.fml.DistExecutor.unsafeCallWhenOn(
-            net.minecraftforge.api.distmarker.Dist.CLIENT,
-            () -> () -> ClientModelService.createExportEnvironment(server, () -> new ServerCatalog(catalog.current())));
+        exports = Platform.isClient() && !server.isDedicatedServer()
+            ? ClientModelService.createExportEnvironment(server, () -> new ServerCatalog(catalog.current()))
+            : null;
         publicationSubscription = catalog.subscribe(transition -> pendingPublication.set(transition.current()));
     }
 
@@ -79,7 +82,7 @@ public final class ServerModelService implements AutoCloseable {
                 try {
                     SessionProtocolHandler.publishCatalog(player, publication);
                 } catch (RuntimeException failure) {
-                    YesSteveModel.LOGGER.error("Failed to publish catalog to {}", player.getGameProfile().getName(),
+                    YesSteveModel.LOGGER.error("Failed to publish catalog to {}", player.getGameProfile().name(),
                         failure);
                 }
             }
@@ -121,18 +124,18 @@ public final class ServerModelService implements AutoCloseable {
             throw new IllegalStateException("Server model service is not running");
         }
         var playerId = player.getUUID();
-        var current = connections.current(playerId, player.connection.connection).orElse(null);
+        var current = connections.current(playerId, Connections.of(player)).orElse(null);
         if (current != null) {
             return current.session;
         }
         var session = new ServerModelSession(catalog::current, syncRoaming);
         var transport = new ForgeTransportPort(player);
-        connections.replace(playerId, player.connection.connection, new ConnectionState(player, session, transport));
+        connections.replace(playerId, Connections.of(player), new ConnectionState(player, session, transport));
         return session;
     }
 
     public synchronized Optional<ServerModelSession> session(ServerPlayer player) {
-        return session(player, player.connection.connection);
+        return session(player, Connections.of(player));
     }
 
     public synchronized Optional<ServerModelSession> session(ServerPlayer player, Connection connection) {
@@ -140,7 +143,7 @@ public final class ServerModelService implements AutoCloseable {
     }
 
     public synchronized boolean runIfCurrent(ServerPlayer player, ServerModelSession owner, Runnable action) {
-        return runIfCurrent(player, player.connection.connection, owner, action);
+        return runIfCurrent(player, Connections.of(player), owner, action);
     }
 
     public synchronized boolean runIfCurrent(ServerPlayer player, Connection connection, ServerModelSession owner,
@@ -153,7 +156,7 @@ public final class ServerModelService implements AutoCloseable {
     }
 
     public synchronized void closeSession(ServerPlayer player) {
-        connections.remove(player.getUUID(), player.connection.connection);
+        connections.remove(player.getUUID(), Connections.of(player));
     }
 
     public ResourceDispatchWorker dispatch() {
@@ -161,7 +164,7 @@ public final class ServerModelService implements AutoCloseable {
     }
 
     public synchronized ForgeTransportPort transport(ServerPlayer player, ServerModelSession owner) {
-        var state = connections.current(player.getUUID(), player.connection.connection).orElse(null);
+        var state = connections.current(player.getUUID(), Connections.of(player)).orElse(null);
         if (state == null || state.session != owner) {
             throw new IllegalStateException("Model session is not current");
         }
@@ -188,8 +191,8 @@ public final class ServerModelService implements AutoCloseable {
     }
 
     public synchronized boolean startGenPreview(ServerPlayer player) {
-        var state = connections.current(player.getUUID(), player.connection.connection).orElse(null);
-        if (INSTANCE != this || !player.hasPermissions(2) || state == null || !state.session.active()
+        var state = connections.current(player.getUUID(), Connections.of(player)).orElse(null);
+        if (INSTANCE != this || !player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) || state == null || !state.session.active()
             || !state.session.hasPublishedCatalog())
             return false;
         NetworkHandler.sendToClientPlayer(GenPreviewStartProto.newBuilder().build(), player);
@@ -220,7 +223,7 @@ public final class ServerModelService implements AutoCloseable {
                     PreviewAvailableProto.newBuilder().setModelId(java.nio.ByteBuffer.wrap(identity.modelId().bytes()))
                         .setContainerId(java.nio.ByteBuffer.wrap(identity.containerId().bytes())).build();
                 for (var player : server.getPlayerList().getPlayers()) {
-                    var state = connections.current(player.getUUID(), player.connection.connection).orElse(null);
+                    var state = connections.current(player.getUUID(), Connections.of(player)).orElse(null);
                     if (state == null || !state.session.active())
                         continue;
                     try {
@@ -326,7 +329,7 @@ public final class ServerModelService implements AutoCloseable {
                 failure -> ServerModelService.this
                     .runIfCurrent(player, session, () -> NetworkHandler.sendToClientPlayer(failure, player)),
                 serverResources, previews,
-                new ServerAssetTransfers.Management(previewWork, () -> player.hasPermissions(2),
+                new ServerAssetTransfers.Management(previewWork, () -> player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER),
                     message -> ServerModelService.this.runIfCurrent(player, session,
                         () -> NetworkHandler.sendToClientPlayer(message, player)),
                     ServerModelService.this::publishCommittedPreview));

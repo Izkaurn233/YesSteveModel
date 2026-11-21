@@ -4,13 +4,8 @@ import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.natives.NativeRuntime;
 import com.sun.jna.NativeLibrary;
-import com.sun.jna.Platform;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringUtil;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.ModLoadingStage;
-import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -318,13 +313,12 @@ public final class NativeLibUtil {
             return preferredPath;
         } catch (Throwable t) {
             YesSteveModel.LOGGER.warn("Failed to create preferred directory, using fallback", t);
-            return FMLPaths.GAMEDIR.get().resolve(YesSteveModel.MOD_ID).resolve("cache").resolve("unstable");
+            return Platform.gameDir().resolve(YesSteveModel.MOD_ID).resolve("cache").resolve("unstable");
         }
     }
 
     private static String getModVersion() {
-        return ModList.get().getModFileById(YesSteveModel.MOD_ID).getFile().getModInfos().get(0).getVersion()
-            .toString();
+        return Platform.ysmVersion();
     }
 
     /**
@@ -377,7 +371,7 @@ public final class NativeLibUtil {
      */
     public static LibcType detectLibc() {
         try {
-            NativeLibrary lib = NativeLibrary.getInstance(Platform.C_LIBRARY_NAME);
+            NativeLibrary lib = NativeLibrary.getInstance(com.sun.jna.Platform.C_LIBRARY_NAME);
             if (lib != null) {
                 // 检测 Android Bionic
                 if (hasFunction(lib, "android_set_abort_message")) {

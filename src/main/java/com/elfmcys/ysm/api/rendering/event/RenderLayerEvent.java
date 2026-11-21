@@ -3,22 +3,23 @@ package com.elfmcys.ysm.api.rendering.event;
 import com.elfmcys.ysm.api.event.CancellableEvent;
 import com.elfmcys.ysm.geckolib3.geo.GeoRenderData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 
+/** The collector and pose are borrowed during this event's synchronous dispatch. */
 public class RenderLayerEvent extends CancellableEvent {
     private final Object target;
     private final GeoRenderData renderData;
     private final PoseStack poseStack;
-    private final MultiBufferSource buffer;
+    private final SubmitNodeCollector collector;
     private final int packedLight;
     private final int overlay;
 
-    public RenderLayerEvent(Object target, GeoRenderData renderData, PoseStack poseStack, MultiBufferSource buffer,
+    public RenderLayerEvent(Object target, GeoRenderData renderData, PoseStack poseStack, SubmitNodeCollector collector,
         int packedLight, int overlay) {
         this.target = target;
         this.renderData = renderData;
         this.poseStack = poseStack;
-        this.buffer = buffer;
+        this.collector = collector;
         this.packedLight = packedLight;
         this.overlay = overlay;
     }
@@ -35,8 +36,8 @@ public class RenderLayerEvent extends CancellableEvent {
         return poseStack;
     }
 
-    public MultiBufferSource buffer() {
-        return buffer;
+    public SubmitNodeCollector collector() {
+        return collector;
     }
 
     public int packedLight() {

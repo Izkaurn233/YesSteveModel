@@ -1,7 +1,7 @@
 package com.elfmcys.ysm.buffer;
 
 import com.elfmcys.ysm.util.UnsafeUtil;
-import io.netty.util.internal.PlatformDependent;
+import java.lang.foreign.MemorySegment;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -18,7 +18,7 @@ final class MappedFileBuffer implements NativeStorage {
 
     @Override
     public long ptr() {
-        return PlatformDependent.directBufferAddress(mapped);
+        return MemorySegment.ofBuffer(mapped).address();
     }
 
     @Override

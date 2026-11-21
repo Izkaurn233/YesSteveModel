@@ -1,21 +1,14 @@
 package com.elfmcys.ysm.client.gui;
 
-import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.util.ResourceDiagnostics;
 import java.lang.ref.WeakReference;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 
 /** A model browser and its child screens cannot outlive their client world. */
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = YesSteveModel.MOD_ID)
 public abstract class ModelScreen extends Screen {
     private static @Nullable Lifetime active;
     private static WeakReference<ClientLevel> unloadedLevel = new WeakReference<>(null);
@@ -70,28 +63,27 @@ public abstract class ModelScreen extends Screen {
         super.removed();
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onScreenOpening(ScreenEvent.Opening event) {
-        if (!(event.getNewScreen() instanceof ModelScreen screen) || screen.lifetime == null)
-            return;
+    public static boolean allowOpening(@Nullable Screen target) {
+        if (!(target instanceof ModelScreen screen) || screen.lifetime == null)
+            return true;
         if (!screen.hasCurrentWorld()) {
-            event.setCanceled(true);
             ResourceDiagnostics.log("model GUI opening rejected: screen={} reason=world-ended-or-unavailable",
                 screen.getClass().getSimpleName());
-            return;
+            return false;
         }
         if (active != null && active != screen.lifetime)
             active.retire();
         active = screen.lifetime;
         active.displayed = new WeakReference<>(screen);
+        return true;
     }
 
     public static void unload(ClientLevel level) {
-        // Forge posts Unload before Minecraft replaces or clears its level field.
+        // The level hook runs before Minecraft replaces or clears its level field.
         unloadedLevel = new WeakReference<>(level);
         if (ResourceDiagnostics.isEnabled())
             ResourceDiagnostics.track(ResourceDiagnostics.Kind.CLIENT_LEVEL, level,
-                "client level " + level.dimension().location());
+                "client level " + level.dimension().identifier());
         var closing = active;
         if (closing == null || closing.level.get() != level)
             return;

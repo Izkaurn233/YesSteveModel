@@ -1,152 +1,112 @@
 package com.elfmcys.ysm.client.renderer;
 
-import com.elfmcys.ysm.capability.PlayerAnimatableCapability;
-import com.elfmcys.ysm.capability.PlayerAnimatableCapabilityProvider;
-import com.elfmcys.ysm.client.compat.swarfare.SWarfareCompat;
 import com.elfmcys.ysm.client.entity.CustomPlayerEntity;
-import com.elfmcys.ysm.client.gui.CustomGuiPlayerEntity;
-import com.elfmcys.ysm.client.renderer.layer.CustomParrotOnShoulderLayer;
-import com.elfmcys.ysm.client.renderer.layer.CustomPlayerElytraLayer;
-import com.elfmcys.ysm.client.renderer.layer.CustomPlayerHeadLayer;
-import com.elfmcys.ysm.client.renderer.layer.CustomPlayerItemInHandLayer;
-import com.elfmcys.ysm.event.api.SpecialPlayerRenderEvent;
-import com.elfmcys.ysm.geckolib3.geo.GeoReplacedEntityRenderer;
+import com.elfmcys.ysm.client.model.locator.PlayerLocator;
+import com.elfmcys.ysm.geckolib3.geo.GeoRenderData;
+import com.elfmcys.ysm.geckolib3.geo.render.built.GeoLocator;
+import com.elfmcys.ysm.mixin.client.ParrotOnShoulderLayerAccessor;
+import com.elfmcys.ysm.util.EquipmentUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.Score;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.scores.Team;
-import net.minecraftforge.common.MinecraftForge;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.client.renderer.entity.layers.ParrotOnShoulderLayer;
+import net.minecraft.client.renderer.entity.layers.WingsLayer;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
-public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<Player, CustomPlayerEntity> {
-    private Identifier textureOverride;
+public final class CustomPlayerRenderer {
+    private final EntityRendererProvider.Context context;
+    private final ItemModelResolver items;
+    private WingsLayer<AvatarRenderState, PlayerModel> wings;
+    private ParrotOnShoulderLayer parrots;
 
-    @SuppressWarnings("all")
-    public CustomPlayerRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx);
-        addLayer(new CustomPlayerItemInHandLayer(ctx.getItemInHandRenderer()));
-        addLayer(new CustomPlayerElytraLayer(ctx));
-        addLayer(new CustomParrotOnShoulderLayer(ctx));
-        addLayer(new CustomPlayerHeadLayer(ctx));
+    public CustomPlayerRenderer(EntityRendererProvider.Context context) {
+        this.context = context;
+        items = context.getItemModelResolver();
     }
 
-    @Override
-    @SuppressWarnings("all")
-    public void render(Player player, float entityYaw, float partialTick, PoseStack poseStack,
-        MultiBufferSource bufferSource, int packedLight) {
-        var cap = player.getCapability(PlayerAnimatableCapabilityProvider.CAP).orElse(null);
-        if (cap != null)
-            renderReplacement(cap, entityYaw, partialTick, poseStack, bufferSource, packedLight, () -> {
-            });
-    }
+    public void submitLayers(CustomPlayerEntity animatable, GeoRenderData data, AvatarRenderer<?> renderer,
+        AvatarRenderState state, PoseStack pose, SubmitNodeCollector collector, int overlay) {
+        var player = animatable.getEntity();
+        var locators = PlayerLocator.get();
+        submitItem(player, player.getMainHandItem(), ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, data, pose, collector,
+            locators.rightHand, state, overlay);
+        submitItem(player, player.getOffhandItem(), ItemDisplayContext.THIRD_PERSON_LEFT_HAND, data, pose, collector,
+            locators.leftHand, state, overlay);
 
-    public boolean renderReplacement(PlayerAnimatableCapability cap, float entityYaw, float partialTick,
-        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, Runnable handoff) {
-        if (!cap.isPresentationAllowed())
-            return false;
-        if (SWarfareCompat.shouldHidePlayerRender(cap.getEntity())) {
-            handoff.run();
-            return true;
+        var head = player.getItemBySlot(EquipmentSlot.HEAD);
+        var equipment = head.get(DataComponents.EQUIPPABLE);
+        if (equipment == null || equipment.slot() != EquipmentSlot.HEAD || equipment.assetId().isEmpty()) {
+            submitItem(player, head, ItemDisplayContext.HEAD, data, pose, collector, locators.head, state, overlay);
         }
-        var data = cap.update(partialTick);
-        return cap.consumePrepared(data, borrowed -> {
-            var event = new SpecialPlayerRenderEvent(cap.getEntity(), cap, cap.getInstalledModelId());
-            var suppressed = com.elfmcys.ysm.YesSteveModel.postEvent(event);
-            if (!cap.canConsume(borrowed, borrowed.ctx))
-                return false;
-            if (suppressed) {
-                handoff.run();
-                return true;
+
+        var elytra = EquipmentUtil.getEquippedElytraItem(player);
+        if (!elytra.isEmpty() && data.modelState.locatorGroupSize(locators.elytra) > 0) {
+            if (wings == null) {
+                wings = new WingsLayer<>(renderer, context.getModelSet(), context.getEquipmentRenderer());
             }
-            if (MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Pre<>(
-                cap.getEntity(), this, partialTick, poseStack, bufferSource, packedLight))) {
-                if (!cap.canConsume(borrowed, borrowed.ctx))
-                    return false;
-                handoff.run();
-                return true;
-            }
-            if (!cap.canConsume(borrowed, borrowed.ctx))
-                return false;
-            handoff.run();
-            textureOverride = event.getTextureLocationOverride();
+            var previousChest = state.chestEquipment;
+            state.chestEquipment = elytra;
             try {
-                renderPrepared(cap, borrowed, textureOverride, entityYaw, partialTick, poseStack, bufferSource,
-                    packedLight);
+                data.modelState.visitLocatorGroup(locators.elytra, pose, located -> {
+                    located.translate(0, 1.5, 0);
+                    located.rotateDegrees(Axis.ZP, 180);
+                    located.scale(2, 2, 2);
+                    wings.submit(located, collector, state.lightCoords, state, state.yRot, state.xRot);
+                });
             } finally {
-                textureOverride = null;
+                state.chestEquipment = previousChest;
             }
-            return true;
-        });
-    }
+        }
 
-    @Override
-    public boolean shouldShowName(Player entity) {
-        double distance = this.entityRenderDispatcher.distanceToSqr(entity);
-        float renderDistance = entity.isDiscrete() ? 32.0F : 64.0F;
-        if (distance >= (double)(renderDistance * renderDistance)) {
-            return false;
-        } else {
-            Minecraft minecraft = Minecraft.getInstance();
-            LocalPlayer player = minecraft.player;
-            if (player == null) {
-                return false;
+        if (state.parrotOnLeftShoulder != null || state.parrotOnRightShoulder != null) {
+            if (parrots == null) {
+                parrots = new ParrotOnShoulderLayer(renderer, context.getModelSet());
             }
-            boolean invisible = !entity.isInvisibleTo(player);
-            if (entity != player) {
-                Team team1 = entity.getTeam();
-                Team team2 = player.getTeam();
-                if (team1 != null) {
-                    Team.Visibility team$visibility = team1.getNameTagVisibility();
-                    return switch (team$visibility) {
-                        case ALWAYS -> invisible;
-                        case NEVER -> false;
-                        case HIDE_FOR_OTHER_TEAMS -> team2 == null ? invisible
-                            : team1.isAlliedTo(team2) && (team1.canSeeFriendlyInvisibles() || invisible);
-                        case HIDE_FOR_OWN_TEAM -> team2 == null ? invisible : !team1.isAlliedTo(team2) && invisible;
-                    };
-                }
+            if (state.parrotOnLeftShoulder != null) {
+                data.modelState.visitLocatorGroup(locators.leftShoulder, pose, located ->
+                    submitParrot(located, collector, state, true));
             }
-            return Minecraft.renderNames() && entity != minecraft.getCameraEntity() && invisible && !entity.isVehicle();
+            if (state.parrotOnRightShoulder != null) {
+                data.modelState.visitLocatorGroup(locators.rightShoulder, pose, located ->
+                    submitParrot(located, collector, state, false));
+            }
         }
     }
 
-    @Override
-    @NotNull
-    public Identifier getTextureLocation(Player pEntity) {
-        return textureOverride == null ? pEntity.getCapability(PlayerAnimatableCapabilityProvider.CAP)
-            .map(CustomPlayerEntity::getTextureLocation).orElse(MissingTextureAtlasSprite.getLocation())
-            : textureOverride;
+    private void submitParrot(PoseStack pose, SubmitNodeCollector collector, AvatarRenderState state, boolean left) {
+        pose.translate(0, 1.5, 0);
+        pose.rotateDegrees(Axis.ZP, 180);
+        pose.translate(left ? -0.4F : 0.4F, state.isCrouching ? 1.3F : 1.5F, 0);
+        ((ParrotOnShoulderLayerAccessor) parrots).ysm$submitShoulder(pose, collector, state.lightCoords, state,
+            left ? state.parrotOnLeftShoulder : state.parrotOnRightShoulder, state.yRot, state.xRot, left);
     }
 
-    @Override
-    @SuppressWarnings("all")
-    protected void renderNameTag(Player player, Component displayName, PoseStack poseStack, MultiBufferSource buffer,
-        int packedLight) {
-        if (CustomGuiPlayerEntity.isFakePlayer(player)) {
+    private void submitItem(LivingEntity player, ItemStack item, ItemDisplayContext display, GeoRenderData data,
+        PoseStack pose, SubmitNodeCollector collector, GeoLocator locator, AvatarRenderState avatar, int overlay) {
+        if (item.isEmpty() || data.modelState.locatorGroupSize(locator) == 0) {
             return;
         }
-        double distance = this.entityRenderDispatcher.distanceToSqr(player);
-        poseStack.pushPose();
-        if (distance < 100) {
-            Scoreboard scoreboard = player.getScoreboard();
-            Objective objective = scoreboard.getDisplayObjective(2);
-            if (objective != null) {
-                Score score = scoreboard.getOrCreatePlayerScore(player.getScoreboardName(), objective);
-                super.renderNameTag(player, (Component.literal(Integer.toString(score.getScore()))).append(" ")
-                    .append(objective.getDisplayName()), poseStack, buffer, packedLight);
-                poseStack.translate(0, 9.0 * 1.15 * 0.025, 0);
+        var state = new ItemStackRenderState();
+        items.updateForLiving(state, item, display, player);
+        data.modelState.visitLocatorGroup(locator, pose, located -> {
+            if (display == ItemDisplayContext.HEAD) {
+                located.scale(0.625F, 0.625F, 0.625F);
+                located.translate(0, 0.25F, 0);
+            } else {
+                located.translate(0, -0.0625F, -0.1F);
+                located.rotateDegrees(Axis.XP, -90);
             }
-        }
-        super.renderNameTag(player, displayName, poseStack, buffer, packedLight);
-        poseStack.popPose();
+            state.submit(located, collector, avatar.lightCoords, overlay, avatar.outlineColor);
+        });
     }
 }

@@ -8,6 +8,8 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import java.util.List;
 
 public class ServerConfig {
+    private static ForgeConfigSpec spec;
+
     public static ForgeConfigSpec.IntValue THREAD_COUNT;
     public static ForgeConfigSpec.IntValue BANDWIDTH_LIMIT;
     public static ForgeConfigSpec.IntValue DISPATCH_SOFT_LIMIT;
@@ -24,7 +26,13 @@ public class ServerConfig {
     public static ForgeConfigSpec init() {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         ServerConfig.init(builder);
-        return builder.build();
+        spec = builder.build();
+        return spec;
+    }
+
+    /** Client presentation can observe a join or disconnect before the server spec is available. */
+    public static <T> T readClient(ForgeConfigSpec.ConfigValue<T> value) {
+        return spec.isLoaded() ? value.get() : value.getDefault();
     }
 
     private static void init(ForgeConfigSpec.Builder builder) {

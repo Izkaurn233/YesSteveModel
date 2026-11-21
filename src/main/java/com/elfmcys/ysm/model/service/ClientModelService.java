@@ -237,9 +237,9 @@ public final class ClientModelService implements AutoCloseable {
             task.run();
             return;
         }
-        // BlockableEventLoop.execute may run inline during startup; tell keeps GPU publication
+        // BlockableEventLoop.execute may run inline during startup; schedule keeps GPU publication
         // on the render owner while managedBlock drains the same task queue.
-        minecraft.tell(task);
+        minecraft.schedule(task);
     }
 
     static <T extends AutoCloseable> T publishRequired(Supplier<T> factory, Consumer<T> completeRequired,

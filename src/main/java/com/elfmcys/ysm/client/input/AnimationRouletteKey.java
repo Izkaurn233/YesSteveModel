@@ -27,7 +27,7 @@ public class AnimationRouletteKey {
             return;
         }
         if (action == InputConstants.PRESS && InputCheckUtil.keyIsMatch(event, ANIMATION_ROULETTE_KEY)
-            && (!NetworkHandler.isRemoteChannelPresent() || ServerConfig.CAN_SWITCH_MODEL.get())) {
+            && (!NetworkHandler.isRemoteChannelPresent() || ServerConfig.readClient(ServerConfig.CAN_SWITCH_MODEL))) {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.getCapability(PlayerAnimatableCapabilityProvider.CAP).ifPresent(cap -> {
                     String modelId = cap.getModelId();

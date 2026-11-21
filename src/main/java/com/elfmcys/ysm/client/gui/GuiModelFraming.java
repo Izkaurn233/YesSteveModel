@@ -2,34 +2,23 @@ package com.elfmcys.ysm.client.gui;
 
 import com.elfmcys.ysm.geckolib3.geo.animated.GeoModelState;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 
-/** A per-card camera; the delegate exists only during a synchronous GUI draw. */
-public final class GuiModelFraming implements MultiBufferSource {
+/** Fits texture-card geometry in the picture-in-picture canvas while the pose is borrowed. */
+public final class GuiModelFraming {
     private final GuiModelView view = new GuiModelView();
     private final GuiModelView.Bounds bounds = new GuiModelView.Bounds();
     private final Matrix4f bonePose = new Matrix4f();
     private final Matrix4d transform = new Matrix4d();
     private final Matrix4d boneTransform = new Matrix4d();
     private Object installation;
-    private MultiBufferSource delegate;
-    private float width, height;
-
-    public void begin(MultiBufferSource delegate, float width, float height) {
-        this.delegate = delegate;
-        this.width = width;
-        this.height = height;
+    public boolean applyPreview(Object installation, GeoModelState state, PoseStack poseStack, float width, float height) {
+        return fit(installation, state, poseStack, width, height, width / 2, height / 2, 0);
     }
 
-    public void end() {
-        delegate = null;
-    }
-
-    public boolean apply(Object installation, GeoModelState state, PoseStack poseStack) {
+    private boolean fit(Object installation, GeoModelState state, PoseStack poseStack, float width, float height,
+        float targetX, float targetY, float targetZ) {
         if (this.installation != installation) {
             this.installation = installation;
             view.reset();
@@ -61,15 +50,11 @@ public final class GuiModelFraming implements MultiBufferSource {
         if (camera == null)
             return false;
         var scale = camera.scale();
-        transform.translation(-scale * camera.centerX(), -scale * camera.centerY(), 1_000 - scale * camera.centerZ())
+        transform.translation(targetX - scale * camera.centerX(), targetY - scale * camera.centerY(), targetZ - scale * camera.centerZ())
             .scale(scale).mul(boneTransform.set(poseStack.last().pose()));
         poseStack.last().pose().set(transform);
         // A positive uniform camera scale preserves the existing normal directions.
         return poseStack.last().pose().isFinite();
     }
 
-    @Override
-    public VertexConsumer getBuffer(RenderType type) {
-        return delegate.getBuffer(type);
-    }
 }

@@ -5,8 +5,8 @@ import com.elfmcys.ysm.accessor.IArrowExtraInfo;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,18 +16,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AbstractArrow.class)
-public class AbstractArrowEntityMixin implements IArrowExtraInfo {
+public abstract class AbstractArrowEntityMixin implements IArrowExtraInfo {
     @Unique
     private String shootItemId = StringUtils.EMPTY;
     @Shadow
-    protected boolean inGround;
+    protected abstract boolean isInGround();
     @Shadow
     protected int inGroundTime;
 
     @Unique
     @Override
-    public boolean isInGround() {
-        return inGround;
+    public boolean ysm$isInGround() {
+        return isInGround();
     }
 
     @Unique
@@ -49,7 +49,7 @@ public class AbstractArrowEntityMixin implements IArrowExtraInfo {
         }
         // 设置 owner 时，缓存一下射击时主手物品 ID，用于 molang
         if (owner instanceof LivingEntity livingEntity) {
-            Identifier key = ForgeRegistries.ITEMS.getKey(livingEntity.getMainHandItem().getItem());
+            Identifier key = BuiltInRegistries.ITEM.getKey(livingEntity.getMainHandItem().getItem());
             if (key != null) {
                 shootItemId = key.toString();
             }

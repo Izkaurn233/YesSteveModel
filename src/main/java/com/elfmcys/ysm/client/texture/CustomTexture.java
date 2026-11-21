@@ -4,19 +4,15 @@ import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.natives.image.ImageSource;
 import com.elfmcys.ysm.model.storage.PreviewStore;
 import com.elfmcys.ysm.model.storage.PreviewPixels;
-import com.mojang.blaze3d.platform.GlStateManager;
-import org.lwjgl.opengl.GL11;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public class CustomTexture extends AbstractTexture {
+public class CustomTexture extends YsmTexture {
     private final ImageSource source;
     private final Decoder decoder;
     private final Uploader uploader;
@@ -54,7 +50,7 @@ public class CustomTexture extends AbstractTexture {
 
     @Override
     public void load(ResourceManager resourceManager) {
-        RenderSystem.assertOnRenderThreadOrInit();
+        RenderSystem.assertOnRenderThread();
         if (closed || failure != null) {
             return;
         }
@@ -84,19 +80,11 @@ public class CustomTexture extends AbstractTexture {
     }
 
     private static void upload(CustomTexture texture, NativeImage img) {
-        TextureUtil.prepareImage(texture.getId(), 0, img.getWidth(), img.getHeight());
-        img.upload(0, 0, 0, 0, 0, img.getWidth(), img.getHeight(), false, false, false, false);
+        texture.uploadPixels(img);
     }
 
     private static void uploadPrepared(CustomTexture texture, PreviewPixels pixels) {
-        texture.setFilter(false, false);
-        TextureUtil.prepareImage(texture.getId(), 0, pixels.width(), pixels.height());
-        GlStateManager._pixelStore(GL11.GL_UNPACK_ROW_LENGTH, 0);
-        GlStateManager._pixelStore(GL11.GL_UNPACK_SKIP_PIXELS, 0);
-        GlStateManager._pixelStore(GL11.GL_UNPACK_SKIP_ROWS, 0);
-        GlStateManager._pixelStore(GL11.GL_UNPACK_ALIGNMENT, 4);
-        pixels.borrow(data -> GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, pixels.width(), pixels.height(),
-            GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data));
+        texture.uploadPixels(pixels);
     }
 
     @Override

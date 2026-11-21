@@ -2,8 +2,11 @@ package com.elfmcys.ysm.client.gui.button;
 
 import com.elfmcys.ysm.YesSteveModel;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.StateSwitchingButton;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.fabricmc.api.EnvType;
@@ -12,17 +15,15 @@ import net.fabricmc.api.Environment;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class FlatCheckbox extends StateSwitchingButton implements IConfigFormsButton {
+public class FlatCheckbox extends AbstractWidget implements IConfigFormsButton {
     private static final Identifier BUTTON_TEXTURE =
         Identifier.fromNamespaceAndPath(YesSteveModel.MOD_ID, "texture/roulette.png");
     private final Consumer<Boolean> onClick;
-    private final Component name;
+    private boolean selected;
 
     public FlatCheckbox(int xIn, int yIn, int width, Component name, Consumer<Boolean> onClick) {
-        super(xIn, yIn, width, 12, false);
-        this.name = name;
+        super(xIn, yIn, width, 12, name);
         this.onClick = onClick;
-        this.initTextureValues(0, 0, 128, 12, BUTTON_TEXTURE);
     }
 
     public FlatCheckbox(int xIn, int yIn, Component name, Consumer<Boolean> onClick) {
@@ -30,14 +31,24 @@ public class FlatCheckbox extends StateSwitchingButton implements IConfigFormsBu
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        super.renderWidget(graphics, mouseX, mouseY, partialTicks);
-        graphics.drawString(Minecraft.getInstance().font, name, this.getX() + 14, this.getY() + 2, 0xffffffff, false);
+    public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTON_TEXTURE, getX(), getY(),
+            selected ? 128 : 0, isHoveredOrFocused() ? 12 : 0, width, height, 256, 256);
+        graphics.text(Minecraft.getInstance().font, getMessage(), getX() + 14, getY() + 2, 0xFFFFFFFF, false);
+    }
+
+    public void setStateTriggered(boolean selected) {
+        this.selected = selected;
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        this.isStateTriggered = !this.isStateTriggered;
-        onClick.accept(this.isStateTriggered);
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        selected = !selected;
+        onClick.accept(selected);
+    }
+
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput output) {
+        defaultButtonNarrationText(output);
     }
 }

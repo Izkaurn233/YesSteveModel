@@ -9,8 +9,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.Supplier;
@@ -31,17 +31,17 @@ public class SimpleWatchCommand {
     /**
      * 简化版本 ysmclient watch var <exp> 等效于 ysmclient molang watch add post <exp_name> <exp>
      */
-    public static LiteralArgumentBuilder<CommandSourceStack> get() {
-        LiteralArgumentBuilder<CommandSourceStack> watch = Commands.literal(WATCH_NAME);
+    public static LiteralArgumentBuilder<FabricClientCommandSource> get() {
+        LiteralArgumentBuilder<FabricClientCommandSource> watch = ClientCommands.literal(WATCH_NAME);
 
-        LiteralArgumentBuilder<CommandSourceStack> var = Commands.literal(VAR_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> state = Commands.literal(STATE_NAME);
-        LiteralArgumentBuilder<CommandSourceStack> clear = Commands.literal(CLEAR_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> var = ClientCommands.literal(VAR_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> state = ClientCommands.literal(STATE_NAME);
+        LiteralArgumentBuilder<FabricClientCommandSource> clear = ClientCommands.literal(CLEAR_NAME);
 
-        Supplier<RequiredArgumentBuilder<CommandSourceStack, String>> exp =
-            () -> Commands.argument(EXPRESSION_NAME, StringArgumentType.greedyString()).suggests(ALL_VARS);
-        Supplier<RequiredArgumentBuilder<CommandSourceStack, String>> controller =
-            () -> Commands.argument(CONTROLLER_NAME, StringArgumentType.greedyString()).suggests(ALL_CONTROLLERS);
+        Supplier<RequiredArgumentBuilder<FabricClientCommandSource, String>> exp =
+            () -> ClientCommands.argument(EXPRESSION_NAME, StringArgumentType.greedyString()).suggests(ALL_VARS);
+        Supplier<RequiredArgumentBuilder<FabricClientCommandSource, String>> controller =
+            () -> ClientCommands.argument(CONTROLLER_NAME, StringArgumentType.greedyString()).suggests(ALL_CONTROLLERS);
 
         watch.then(var.then(exp.get().executes(SimpleWatchCommand::addExpression)));
         watch.then(state.then(controller.get().executes(SimpleWatchCommand::addControllerState)));
@@ -51,7 +51,7 @@ public class SimpleWatchCommand {
     }
 
     @SuppressWarnings("all")
-    private static int addExpression(CommandContext<CommandSourceStack> ctx) {
+    private static int addExpression(CommandContext<FabricClientCommandSource> ctx) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }
@@ -69,7 +69,7 @@ public class SimpleWatchCommand {
     }
 
     @SuppressWarnings("all")
-    private static int clearExpression(CommandContext<CommandSourceStack> ctx) {
+    private static int clearExpression(CommandContext<FabricClientCommandSource> ctx) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }
@@ -81,7 +81,7 @@ public class SimpleWatchCommand {
     }
 
     @SuppressWarnings("all")
-    private static int addControllerState(CommandContext<CommandSourceStack> ctx) {
+    private static int addControllerState(CommandContext<FabricClientCommandSource> ctx) {
         if (!isClientReady()) {
             return Command.SINGLE_SUCCESS;
         }

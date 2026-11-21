@@ -4,15 +4,16 @@ import com.elfmcys.ysm.client.gui.CatalogProgressText;
 import com.elfmcys.ysm.config.LoadingStateScreenConfig;
 import com.elfmcys.ysm.model.catalog.CatalogScanProgress;
 import com.elfmcys.ysm.model.service.ClientModelService;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
-public class LoadingStateScreen implements IGuiOverlay {
+public class LoadingStateScreen implements HudElement {
     @Override
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         if (LoadingStateScreenConfig.DISABLE_LOADING_STATE_SCREEN.get())
             return;
         var service = ClientModelService.current().orElse(null);
@@ -29,7 +30,10 @@ public class LoadingStateScreen implements IGuiOverlay {
         var text = Component.translatable("gui.yes_steve_model.sync_hint.title")
             .append(CatalogProgressText.of(progress).copy().withStyle(color));
         var position = LoadingStateScreenConfig.LOADING_STATE_POSITION.get();
-        var textWidth = gui.getFont().width(text);
+        var font = Minecraft.getInstance().font;
+        var textWidth = font.width(text);
+        var screenWidth = graphics.guiWidth();
+        var screenHeight = graphics.guiHeight();
         var x = switch (position) {
             case TOP_LEFT, BOTTOM_LEFT -> 10;
             case TOP_CENTER, BOTTOM_CENTER -> (screenWidth - textWidth) / 2;
@@ -40,7 +44,7 @@ public class LoadingStateScreen implements IGuiOverlay {
             case BOTTOM_LEFT, BOTTOM_RIGHT -> screenHeight - 30;
             case BOTTOM_CENTER -> screenHeight - 85;
         };
-        graphics.drawString(gui.getFont(), text, x, y, 0xFFFFFF);
+        graphics.text(font, text, x, y, 0xFFFFFFFF);
         if (progress.phase() == CatalogScanProgress.Phase.PROCESSING && progress.total() > 0) {
             var barWidth = 150;
             var barHeight = 10;

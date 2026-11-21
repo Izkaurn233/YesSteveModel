@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.apache.commons.lang3.StringUtils;
 
 /** Curios-owned callable surface, loaded only after the Curios group is admitted. */
@@ -26,7 +26,7 @@ public final class CuriosBuiltins implements EntityComponent<LivingEntity> {
             var id = Identifier.tryParse(name);
             if (id == null)
                 return null;
-            var item = ForgeRegistries.ITEMS.getValue(id);
+            var item = BuiltInRegistries.ITEM.getOptional(id).orElse(null);
             if (item != null)
                 items.add(item);
         }

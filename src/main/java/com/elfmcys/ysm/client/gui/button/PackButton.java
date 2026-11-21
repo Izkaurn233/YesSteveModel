@@ -9,12 +9,13 @@ import com.elfmcys.ysm.client.texture.CustomTexture;
 import com.elfmcys.ysm.client.texture.CustomTextureManager;
 import com.elfmcys.ysm.client.texture.TextureHolder;
 import com.elfmcys.ysm.model.domain.ModelPackDescriptor;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
@@ -43,7 +44,7 @@ public class PackButton extends Button implements AutoCloseable {
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float frameDeltaTime) {
+    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float frameDeltaTime) {
         var icon = cover == null ? null : cover.texture();
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
@@ -52,25 +53,22 @@ public class PackButton extends Button implements AutoCloseable {
         graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height,
             backgroundColor, backgroundColor);
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
         if (icon == null) {
-            graphics.blit(ICON, this.getX(), this.getY(), 0, 0, this.width, this.height, this.width, this.height);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, ICON, this.getX(), this.getY(), 0, 0, this.width, this.height, this.width, this.height);
         } else {
-            graphics.blit(icon.id(), this.getX(), this.getY(), 0, 0, this.width, this.height, this.width, this.height);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, icon.id(), this.getX(), this.getY(), 0, 0, this.width, this.height, this.width, this.height);
         }
-        RenderSystem.disableBlend();
 
         Component message = this.getMessage();
         List<FormattedCharSequence> split = font.split(message, 45);
         if (split.size() > 1) {
             drawCenteredString(graphics, font, split.get(0), this.getX() + this.width / 2,
-                this.getY() + this.height - 19, 0x555555);
+                this.getY() + this.height - 19, 0xFF555555);
             drawCenteredString(graphics, font, split.get(1), this.getX() + this.width / 2,
-                this.getY() + this.height - 10, 0x555555);
+                this.getY() + this.height - 10, 0xFF555555);
         } else {
             drawCenteredString(graphics, font, this.getMessage(), this.getX() + this.width / 2,
-                this.getY() + this.height - 15, 0x555555);
+                this.getY() + this.height - 15, 0xFF555555);
         }
 
         if (this.isHoveredOrFocused()) {
@@ -86,31 +84,30 @@ public class PackButton extends Button implements AutoCloseable {
         }
     }
 
-    public void renderComponentTooltip(GuiGraphics graphics, Screen screen, int pMouseX, int pMouseY) {
+    public void renderComponentTooltip(GuiGraphicsExtractor graphics, Screen screen, int pMouseX, int pMouseY) {
         String desc = LanguageManager.getI18n(pack, "description", pack.desc());
-        if (StringUtils.isBlank(desc) && !Screen.hasShiftDown()) {
+        boolean shiftDown = InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+            || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT);
+        if (StringUtils.isBlank(desc) && !shiftDown) {
             return;
         }
         var mutableComponents = new java.util.ArrayList<Component>();
         if (!StringUtils.isBlank(desc))
             mutableComponents.add(Component.literal(desc));
-        if (Screen.hasShiftDown())
+        if (shiftDown)
             mutableComponents.add(Component.literal(pack.hierarchy()));
         if (this.isHovered()) {
-            graphics.pose().pushPose();
-            graphics.pose().translate(0f, 0f, 4000);
-            graphics.renderComponentTooltip(screen.getMinecraft().font, mutableComponents, pMouseX, pMouseY);
-            graphics.pose().popPose();
+            graphics.setComponentTooltipForNextFrame(Minecraft.getInstance().font, mutableComponents, pMouseX, pMouseY);
         }
     }
 
-    private static void drawCenteredString(GuiGraphics graphics, Font font, Component text, int x, int y, int color) {
-        graphics.drawString(font, text, x - font.width(text) / 2, y, color, false);
+    private static void drawCenteredString(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int color) {
+        graphics.text(font, text, x - font.width(text) / 2, y, color, false);
     }
 
-    private static void drawCenteredString(GuiGraphics graphics, Font font, FormattedCharSequence text, int x, int y,
+    private static void drawCenteredString(GuiGraphicsExtractor graphics, Font font, FormattedCharSequence text, int x, int y,
         int color) {
-        graphics.drawString(font, text, x - font.width(text) / 2, y, color, false);
+        graphics.text(font, text, x - font.width(text) / 2, y, color, false);
     }
 
     @Override

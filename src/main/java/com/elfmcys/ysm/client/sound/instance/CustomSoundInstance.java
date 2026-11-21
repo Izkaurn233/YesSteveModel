@@ -2,9 +2,7 @@ package com.elfmcys.ysm.client.sound.instance;
 
 import com.elfmcys.ysm.client.sound.stream.CustomAudioStream;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.sounds.AudioStream;
-import net.minecraft.client.sounds.SoundBufferLibrary;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +22,7 @@ public final class CustomSoundInstance extends MinecraftSoundInstance implements
         this.stream = Objects.requireNonNull(stream, "stream");
     }
 
-    @Override
-    public @NotNull CompletableFuture<AudioStream> getStream(@NotNull SoundBufferLibrary soundBuffers,
-        @NotNull Sound sound, boolean looping) {
+    public @NotNull CompletableFuture<AudioStream> getStream() {
         return CompletableFuture.completedFuture(new MinecraftAudioStreamAdapter(stream));
     }
 

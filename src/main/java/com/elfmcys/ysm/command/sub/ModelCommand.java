@@ -17,6 +17,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Collection;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
@@ -31,10 +32,10 @@ public final class ModelCommand {
     private ModelCommand() {}
 
     public static LiteralArgumentBuilder<CommandSourceStack> get() {
-        var model = Commands.literal("model").requires(source -> CommandUtil.hasPermission(source, 2));
+        var model = Commands.literal("model").requires(source -> CommandUtil.hasPermission(source, Permissions.COMMANDS_GAMEMASTER));
         model.then(Commands.literal("reload").executes(ModelCommand::reload));
         model.then(Commands.literal("errors").executes(ModelCommand::errors));
-        model.then(Commands.literal("gen-preview").requires(source -> source.hasPermission(2))
+        model.then(Commands.literal("gen-preview").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(ModelCommand::genPreview));
         model.then(Commands.literal("disable").then(Commands.argument(TARGETS, EntityArgument.players())
             .then(Commands.argument("value", BoolArgumentType.bool()).executes(ModelCommand::disable))));
@@ -49,7 +50,7 @@ public final class ModelCommand {
 
     private static int genPreview(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
-        if (!source.hasPermission(2) || !(source.getEntity() instanceof ServerPlayer player)
+        if (!source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) || !(source.getEntity() instanceof ServerPlayer player)
             || !ServerModelService.instance().startGenPreview(player)) {
             source.sendFailure(Component.translatable("message.yes_steve_model.gen_preview.no_client"));
             return 0;

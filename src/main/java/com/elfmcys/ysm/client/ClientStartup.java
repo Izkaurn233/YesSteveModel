@@ -35,15 +35,9 @@ import com.elfmcys.ysm.expression.host.OptionalCapability;
 import com.elfmcys.ysm.expression.host.OptionalCapabilityAdmission;
 import com.elfmcys.ysm.model.ModelSystem;
 import com.elfmcys.ysm.model.service.ClientModelService;
-import net.minecraftforge.fml.ModLoader;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingStage;
-import net.minecraftforge.fml.ModLoadingWarning;
-import net.minecraftforge.fml.loading.LoadingModList;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Optional;
-import java.util.TreeMap;
 
 /** Owns the client setup order before the model service becomes visible. */
 public final class ClientStartup {
@@ -51,10 +45,7 @@ public final class ClientStartup {
 
     public static void start(ModelSystem system) {
         AnimationRegister.registerAnimationState();
-        var mods = ModList.get();
-        var versions = new TreeMap<String, String>();
-        mods.getMods().forEach(mod -> versions.put(mod.getModId(), mod.getVersion().toString()));
-        var builtinAdmission = new OptionalCapabilityAdmission(mods::isLoaded, versions,
+        var builtinAdmission = new OptionalCapabilityAdmission(Platform::isModLoaded, Platform.modVersions(),
             ClientStartup.class.getClassLoader(), Platform.isDevelopment());
 
         builtinAdmission.initialize(OptionalCapability.CURIOS, CuriosCompat::init, CuriosCompat::isInstalled);
@@ -104,18 +95,13 @@ public final class ClientStartup {
     }
 
     private static void checkCompatibility(Optional<Pair<String, String>> infoHolder) {
-        infoHolder.ifPresent(info -> {
-            ModLoader.get().addWarning(new ModLoadingWarning(
-                LoadingModList.get().getModFileById(YesSteveModel.MOD_ID).getMods().get(0), ModLoadingStage.SIDED_SETUP,
-                "error.yes_steve_model.incompatible_mod_version", info.getKey(), info.getValue()));
-        });
+        infoHolder.ifPresent(info -> YesSteveModel.LOGGER.warn("Unsupported {} version {}", info.getKey(),
+            info.getValue()));
     }
 
     private static void informIncompatible(String modId, String modName) {
-        if (LoadingModList.get().getModFileById(modId) != null) {
-            ModLoader.get().addWarning(
-                new ModLoadingWarning(LoadingModList.get().getModFileById(YesSteveModel.MOD_ID).getMods().get(0),
-                    ModLoadingStage.SIDED_SETUP, "error.yes_steve_model.incompatible_mod", modName));
+        if (Platform.isModLoaded(modId)) {
+            YesSteveModel.LOGGER.warn("Incompatible mod: {}", modName);
         }
     }
 

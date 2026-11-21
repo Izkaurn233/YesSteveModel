@@ -32,8 +32,6 @@ import com.elfmcys.ysm.network.NetworkHandler;
 import com.elfmcys.ysm.network.forge.ClientProtocolGateway;
 import com.elfmcys.ysm.network.forge.ClientSessionRuntime;
 import com.elfmcys.ysm.util.ModelIdUtil;
-import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -41,19 +39,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraftforge.fml.ModList;
+import com.elfmcys.ysm.platform.Platform;
+import net.minecraft.client.input.CharacterEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +81,7 @@ public class PlayerModelScreen extends ModelScreen {
         super(Component.literal("YSM Player Model GUI"));
         ClientSessionRuntime.reopenCatalog();
         if (NetworkHandler.isRemoteChannelPresent()) {
-            clientNotDisplayModels.addAll(ServerConfig.CLIENT_NOT_DISPLAY_MODEL_PATHS.get());
+            clientNotDisplayModels.addAll(ServerConfig.readClient(ServerConfig.CLIENT_NOT_DISPLAY_MODEL_PATHS));
         }
         rebuildCatalog(service.catalog());
     }
@@ -181,9 +184,9 @@ public class PlayerModelScreen extends ModelScreen {
         var focused = searchFocused;
         textField = new EditBox(font, x + 144, y + 6, 140, 16, Component.literal("YSM Search Box"));
         textField.setValue(previousSearch);
-        textField.setTextColor(0xF3EFE0);
+        textField.setTextColor(0xFFF3EFE0);
         textField.setFocused(focused);
-        textField.moveCursorToEnd();
+        textField.moveCursorToEnd(false);
         addWidget(textField);
 
         addHeaderButtons();
@@ -244,15 +247,13 @@ public class PlayerModelScreen extends ModelScreen {
         }
 
         addRenderableWidget(
-            new Checkbox(x + 5, y - 22, 20, 20, Component.translatable("gui.yes_steve_model.show_model_id_first"),
-                ClientConfig.SHOW_MODEL_ID_FIRST.get(), true) {
-                @Override
-                public void onPress() {
-                    super.onPress();
-                    ClientConfig.SHOW_MODEL_ID_FIRST.set(selected());
+            Checkbox.builder(Component.translatable("gui.yes_steve_model.show_model_id_first"), font)
+                .pos(x + 5, y - 22)
+                .selected(ClientConfig.SHOW_MODEL_ID_FIRST.get())
+                .onValueChange((checkbox, selected) -> {
+                    ClientConfig.SHOW_MODEL_ID_FIRST.set(selected);
                     ClientConfig.SHOW_MODEL_ID_FIRST.save();
-                }
-            });
+                }).build());
 
         addCategoryButton(x + 328, 32, CatalogBrowserState.Category.ALL, "gui.yes_steve_model.all_models");
         addCategoryButton(x + 308, 48, CatalogBrowserState.Category.AUTH, "gui.yes_steve_model.auth_models");
@@ -374,71 +375,70 @@ public class PlayerModelScreen extends ModelScreen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (!hasCurrentWorld())
             return;
         updatePointer(mouseX, mouseY);
         var currentPage = pageScope;
         if (pageFrame != null)
-            pageFrame.prepare(List.copyOf(modelButtons), List.copyOf(packButtons), minecraft.getFrameTime(),
+            pageFrame.prepare(List.copyOf(modelButtons), List.copyOf(packButtons), minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(true),
                 mouseX, mouseY, Util.getMillis());
         if (!hasCurrentWorld() || pageScope != currentPage || currentPage != null && currentPage.isClosed())
             return;
         if (textureButton != null)
             textureButton.active = canOpenTexturePage();
-        renderBackground(graphics);
         graphics.fillGradient(x, y, x + 135, y + 235, 0xFF222222, 0xFF222222);
         graphics.fillGradient(x + 138, y, x + 420, y + 235, 0xFF222222, 0xFF222222);
         graphics.fillGradient(x + 351, y + 7, x + 352, y + 21, 0xFFF3EFE0, 0xFFF3EFE0);
-        textField.render(graphics, mouseX, mouseY, partialTick);
-        renderReferenceEntity(graphics, mouseX, mouseY, minecraft.getFrameTime());
+        textField.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        renderReferenceEntity(graphics, mouseX, mouseY, minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(true));
 
         if (textField.getValue().isEmpty() && !textField.isFocused()) {
-            graphics.drawString(font,
+            graphics.text(font,
                 Component.translatable("gui.yes_steve_model.search").withStyle(ChatFormatting.ITALIC), x + 148, y + 10,
-                0x777777);
+                0xFF777777);
         }
         var page = "%d/%d".formatted(browser.page() + 1, browser.maxPage() + 1);
-        graphics.drawString(font, page, x + 138 + (282 - font.width(page)) / 2, y + 223 - font.lineHeight / 2,
-            0xF3EFE0);
-        var version = ModList.get().getModFileById(YesSteveModel.MOD_ID).versionString();
-        graphics.drawString(font, version, x + 2, y + 226, ChatFormatting.DARK_GRAY.getColor());
+        graphics.text(font, page, x + 138 + (282 - font.width(page)) / 2, y + 223 - font.lineHeight / 2,
+            0xFFF3EFE0);
+        var version = Platform.ysmVersion();
+        graphics.text(font, version, x + 2, y + 226, (0xFF000000 | TextColor.fromLegacyFormat(ChatFormatting.DARK_GRAY).getValue()));
         if (!browser.currentPack().isBlank()) {
-            graphics.drawString(font,
+            graphics.text(font,
                 Component
                     .literal("\uD83D\uDCC2 "
                         + com.elfmcys.ysm.model.catalog.source.CatalogLocation.directory(browser.currentPack()).entry())
                     .withStyle(ChatFormatting.GRAY),
-                x + 142, y - 12, 0xF3EFE0);
+                x + 142, y - 12, 0xFFF3EFE0);
         }
         var progress = service.catalogProgress();
         if (progress != null) {
             var loading = CatalogProgressText.of(progress);
-            graphics.drawString(font, loading, x + 414 - font.width(loading),
-                y + 215 + Math.round((14 - font.lineHeight) / 2f), ChatFormatting.DARK_GRAY.getColor());
+            graphics.text(font, loading, x + 414 - font.width(loading),
+                y + 215 + Math.round((14 - font.lineHeight) / 2f), (0xFF000000 | TextColor.fromLegacyFormat(ChatFormatting.DARK_GRAY).getValue()));
         }
 
-        super.render(graphics, mouseX, mouseY, partialTick);
-        renderables.stream().filter(FlatIconButton.class::isInstance).map(FlatIconButton.class::cast)
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        children().stream().filter(FlatIconButton.class::isInstance).map(FlatIconButton.class::cast)
             .forEach(button -> button.renderToolTip(graphics, this, mouseX, mouseY));
         modelButtons.forEach(button -> button.renderTooltip(graphics, this, mouseX, mouseY));
         failedButtons.forEach(button -> button.renderTooltip(graphics, this, mouseX, mouseY));
-        renderables.stream().filter(PackButton.class::isInstance).map(PackButton.class::cast)
+        children().stream().filter(PackButton.class::isInstance).map(PackButton.class::cast)
             .forEach(button -> button.renderComponentTooltip(graphics, this, mouseX, mouseY));
     }
 
-    protected void renderReferenceEntity(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderReferenceEntity(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }
-        Window window = Minecraft.getInstance().getWindow();
-        double scale = window.getGuiScale();
-        RenderSystem.enableScissor((int)((x + 5) * scale), (int)(window.getHeight() - ((y + 200) * scale)),
-            (int)(125 * scale), (int)(171 * scale));
-        InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, x + 67, y + 190, 70, x + 67 - mouseX,
-            y + 85 - mouseY, player);
-        RenderSystem.disableScissor();
+        int top = y + 29;
+        int bottom = y + 200;
+        int scale = 70;
+        float centerY = (top + bottom) / 2.0F;
+        float offsetY = (y + 190 - centerY) / scale - player.getBbHeight() / 2.0F;
+        InventoryScreen.extractEntityInInventoryFollowsMouse(graphics, x + 5, top, x + 130, bottom, scale,
+            offsetY, mouseX, mouseY + centerY - (y + 85), player);
 
         player.getCapability(PlayerAnimatableCapabilityProvider.CAP).ifPresent(capability -> {
             var renderTarget = capability.getModelRenderTarget();
@@ -451,7 +451,7 @@ public class PlayerModelScreen extends ModelScreen {
             var lines = font.split(FormattedText.of(name), 125);
             var lineY = y + 205;
             for (FormattedCharSequence line : lines) {
-                graphics.drawString(font, line, x + (135 - font.width(line)) / 2, lineY, 0xF3EFE0);
+                graphics.text(font, line, x + (135 - font.width(line)) / 2, lineY, 0xFFF3EFE0);
                 lineY += 10;
             }
         });
@@ -461,7 +461,6 @@ public class PlayerModelScreen extends ModelScreen {
     public void tick() {
         if (!hasCurrentWorld())
             return;
-        textField.tick();
         if (browser.catalog() != service.catalog()) {
             rebuildCatalog(service.catalog());
             calculateModelList();
@@ -471,18 +470,21 @@ public class PlayerModelScreen extends ModelScreen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         updatePointer(mouseX, mouseY);
-        if (textField.mouseClicked(mouseX, mouseY, button)) {
+        if (textField.mouseClicked(event, doubleClick)) {
             setFocused(textField);
             return true;
         }
         if (textField.isFocused()) {
             textField.setFocused(false);
         }
-        var handled = super.mouseClicked(mouseX, mouseY, button);
+        var handled = super.mouseClicked(event, doubleClick);
         if (!handled && button == InputConstants.MOUSE_BUTTON_RIGHT && !browser.currentPack().isBlank()) {
-            getMinecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
             backToParent();
             return true;
         }
@@ -490,9 +492,9 @@ public class PlayerModelScreen extends ModelScreen {
     }
 
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         var previous = textField.getValue();
-        if (textField.charTyped(codePoint, modifiers)) {
+        if (textField.charTyped(event)) {
             if (!Objects.equals(previous, textField.getValue())) {
                 browser.resetPage();
                 init();
@@ -503,36 +505,27 @@ public class PlayerModelScreen extends ModelScreen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (PlayerModelScreenKey.PLAYER_MODEL_KEY.matches(keyCode, scanCode) && !textField.isFocused()) {
+    public boolean keyPressed(KeyEvent event) {
+        if (PlayerModelScreenKey.PLAYER_MODEL_KEY.matches(event) && !textField.isFocused()) {
             onClose();
             return true;
         }
         var previous = textField.getValue();
-        if (textField.keyPressed(keyCode, scanCode, modifiers)) {
+        if (textField.keyPressed(event)) {
             if (!Objects.equals(previous, textField.getValue())) {
                 browser.resetPage();
                 init();
             }
             return true;
         }
-        var handled = textField.isFocused() && textField.isVisible() && keyCode != InputConstants.KEY_ESCAPE
-            && keyCode != InputConstants.KEY_TAB || super.keyPressed(keyCode, scanCode, modifiers);
+        var handled = textField.isFocused() && textField.isVisible() && !event.isEscape()
+            && event.key() != InputConstants.KEY_TAB || super.keyPressed(event);
         updateKeyboardPointer();
         return handled;
     }
 
     @Override
-    protected void insertText(String text, boolean overwrite) {
-        if (overwrite) {
-            textField.setValue(text);
-        } else {
-            textField.insertText(text);
-        }
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double delta) {
         updatePointer(mouseX, mouseY);
         if (delta != 0 && mouseX > x + 143 && mouseX < x + 430 && mouseY > y + 25 && mouseY < y + 235) {
             if (delta > 0 && browser.page() > 0) {
@@ -544,16 +537,16 @@ public class PlayerModelScreen extends ModelScreen {
             }
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontal, delta);
     }
 
     @Override
-    public void resize(Minecraft minecraft, int width, int height) {
+    public void resize(int width, int height) {
         var search = textField == null ? "" : textField.getValue();
         var previousFocus = getFocused();
         var searchFocused = textField != null && textField.isFocused();
         var previousPage = pageScope;
-        super.resize(minecraft, width, height);
+        super.resize(width, height);
         textField.setValue(search);
         if (searchFocused)
             setFocused(textField);

@@ -530,10 +530,10 @@ public abstract class AnimatableEntity<TEntity extends Entity>
         final Entity entity = this.entity;
         final LivingEntity livingEntity = entity instanceof LivingEntity ? (LivingEntity)entity : null;
         int entityTickCount = this instanceof IPreviewEntity ? ClientTickEvent.getTickCount() : entity.tickCount;
-        float realPartialTicks = partialTicks != 1f ? partialTicks : Minecraft.getInstance().getFrameTime();
+        float realPartialTicks = partialTicks != 1f ? partialTicks : Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
         boolean shouldSit =
-            entity.isPassenger() && (entity.getVehicle() != null && entity.getVehicle().shouldRiderSit());
+            entity.isPassenger();
         float limbSwingAmount = 0;
         float limbSwing = 0;
 
@@ -588,7 +588,7 @@ public abstract class AnimatableEntity<TEntity extends Entity>
 
     /** Non-render ingress must not inherit an earlier render frame's context. */
     public final AnimationEvent<AnimatableEntity<TEntity>> createIngressAnimationEvent() {
-        return createAnimationEvent(Minecraft.getInstance().getFrameTime(), RenderContext.levelImmutable());
+        return createAnimationEvent(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true), RenderContext.levelImmutable());
     }
 
     protected void tickAnimation(@NotNull AnimationEvent<AnimatableEntity<TEntity>> animationEvent) {

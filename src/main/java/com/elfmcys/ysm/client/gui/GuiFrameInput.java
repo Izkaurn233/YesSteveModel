@@ -1,6 +1,7 @@
 package com.elfmcys.ysm.client.gui;
 
 import com.elfmcys.ysm.geckolib3.geo.RenderContext;
+import com.elfmcys.ysm.mixin.client.LivingEntityAccessor;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -119,12 +120,11 @@ public final class GuiFrameInput {
     }
 
     private static void setEquipment(Player player, EquipmentSlot slot, ItemStack item) {
-        var inventory = player.getInventory();
-        if (slot == EquipmentSlot.MAINHAND)
-            inventory.items.set(inventory.selected, item);
-        else if (slot == EquipmentSlot.OFFHAND)
-            inventory.offhand.set(0, item);
-        else if (inventory.armor.size() > slot.getIndex())
-            inventory.armor.set(slot.getIndex(), item);
+        if (slot == EquipmentSlot.MAINHAND) {
+            var inventory = player.getInventory();
+            inventory.getNonEquipmentItems().set(inventory.getSelectedSlot(), item);
+        } else {
+            ((LivingEntityAccessor) player).ysm$getEquipment().set(slot, item);
+        }
     }
 }

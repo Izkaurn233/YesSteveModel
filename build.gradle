@@ -56,6 +56,23 @@ def resourceDebug = ysmLocalBooleanProperty('ysm.resource_debug', false)
 // The original sources stay in the tree untouched; see PROJECT_MEMORY.md.
 def portExcludedSources = [
         'com/elfmcys/ysm/client/compat/**',
+        'com/elfmcys/ysm/event/InterModMsg.java',
+        // Superseded by the 26.3 submission pipeline; retain the Forge implementations for reference.
+        'com/elfmcys/ysm/client/renderer/CustomProjectileRenderer.java',
+        'com/elfmcys/ysm/client/renderer/CustomVehicleRenderer.java',
+        'com/elfmcys/ysm/client/renderer/replace/FishingHookRendererReplace.java',
+        'com/elfmcys/ysm/client/renderer/layer/**',
+        'com/elfmcys/ysm/geckolib3/geo/GeoReplacedEntityRenderer.java',
+        'com/elfmcys/ysm/geckolib3/geo/GeoEntityRenderer.java',
+        'com/elfmcys/ysm/geckolib3/geo/GeoProjectilesRenderer.java',
+        'com/elfmcys/ysm/geckolib3/geo/GeoLayerRenderer.java',
+        'com/elfmcys/ysm/geckolib3/geo/IGeoRenderer.java',
+        'com/elfmcys/ysm/accessor/ILivingRenderer.java',
+        'com/elfmcys/ysm/accessor/VertexBufferAccessor.java',
+        'com/elfmcys/ysm/mixin/client/ArrowEntityAccessor.java',
+        'com/elfmcys/ysm/mixin/client/BufferBuilderMixin.java',
+        'com/elfmcys/ysm/mixin/client/BufferSourceMixin.java',
+        'com/elfmcys/ysm/mixin/client/LivingRendererMixin.java',
         'com/elfmcys/ysm/mixin/client/create/**',
         'com/elfmcys/ysm/mixin/client/embeddium/**',
         'com/elfmcys/ysm/mixin/client/parcool/**',
@@ -65,8 +82,17 @@ def portMainJavaRoot = file('src/main/java').toPath()
 def portExcludedSpec = new org.gradle.api.tasks.util.PatternSet().include(portExcludedSources).asSpec
 sourceSets.main.java {
     // Files only: an include-only PatternSet accepts every directory, which would drop the whole tree.
-    exclude { details -> !details.directory && details.file.toPath().startsWith(portMainJavaRoot)
-        && portExcludedSpec.isSatisfiedBy(details) }
+    exclude { details ->
+        if (details.directory || !details.file.toPath().startsWith(portMainJavaRoot)) {
+            return false
+        }
+        // The default model references optional builtin declarations. Keep their existing schema and
+        // let capability admission reject the disabled integrations at runtime.
+        if (details.path.startsWith('com/elfmcys/ysm/client/compat/') && details.name.endsWith('BuiltinComponent.java')) {
+            return false
+        }
+        portExcludedSpec.isSatisfiedBy(details)
+    }
     // Same-name stubs for excluded integrations; each reports its mod as absent.
     srcDir 'src/port/compat-disabled/java'
 }
@@ -107,6 +133,7 @@ loom {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 apply from: 'gradle/declaration.gradle'
+apply from: 'gradle/expression-compatibility.gradle'
 
 processResources {
     inputs.property "mod_version", project.version
@@ -184,6 +211,13 @@ dependencies {
     compileOnly 'org.ow2.asm:asm:9.7.1'
     compileOnly 'org.ow2.asm:asm-tree:9.7.1'
 
+    // Standalone JVMs cannot see Fabric Loader's nested NightConfig dependencies.
+    buildToolRuntimeOnly 'com.electronwill.night-config:core:3.8.4'
+    buildToolRuntimeOnly 'com.electronwill.night-config:toml:3.8.4'
+    testRuntimeOnly 'com.electronwill.night-config:core:3.8.4'
+    testRuntimeOnly 'com.electronwill.night-config:toml:3.8.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.google.protobuf:protobuf-java:3.21.12'
@@ -193,11 +227,15 @@ dependencies {
     testImplementation 'org.ow2.asm:asm-tree:9.7.1'
 }
 
-// PORT(26.3-fabric): verification sources depend on the Forge mock harness (gradle/mock.gradle),
-// which is not ported yet. Point test at an empty root so `check` stays meaningful once restored.
+// The host-independent verification cases run without the legacy Forge mock harness.
 sourceSets {
     test {
-        java.setSrcDirs([])
+        java.setSrcDirs(['src/verification/test/java'])
+        java.include 'com/elfmcys/ysm/version/VersionCompatibilityTest.java',
+                'com/elfmcys/ysm/format/schema/model/ModelOriginVersionTest.java',
+                'com/elfmcys/ysm/client/gui/GuiModelViewTest.java',
+                'com/elfmcys/ysm/client/gui/button/CatalogCardActionsTest.java',
+                'com/elfmcys/ysm/client/texture/TextureRegistrationStateTest.java'
         resources.setSrcDirs([])
     }
 }

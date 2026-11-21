@@ -43,7 +43,7 @@ public class ArmorControllerDiscovery<T extends AnimatableEntity<?>>
                 slots.add(Pair.of(controllerName, slot));
                 continue;
             }
-            if (slot.getType() == EquipmentSlot.Type.ARMOR
+            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR
                 && (condition.hasTest(slot) || animations.containsKey(slot.getName() + ":default"))) {
                 slots.add(Pair.of(controllerName, slot));
                 continue;

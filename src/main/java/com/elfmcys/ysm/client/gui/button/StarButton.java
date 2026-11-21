@@ -5,8 +5,10 @@ import com.elfmcys.ysm.capability.PlayerAnimatableCapabilityProvider;
 import com.elfmcys.ysm.capability.StarModelsCapabilityProvider;
 import com.elfmcys.ysm.network.forge.ClientProtocolGateway;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -19,8 +21,8 @@ public class StarButton extends FlatColorButton {
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
-        super.renderWidget(graphics, mouseX, mouseY, pPartialTick);
+    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float pPartialTick) {
+        super.extractContents(graphics, mouseX, mouseY, pPartialTick);
         int startX = (this.width - 16) / 2;
         int startY = (this.height - 16) / 2;
         LocalPlayer player = Minecraft.getInstance().player;
@@ -29,17 +31,18 @@ public class StarButton extends FlatColorButton {
                 .getCapability(StarModelsCapabilityProvider.STAR_MODELS_CAP).ifPresent(starModelsCap -> {
                     var modelHash = modelInfoCap.getModelHash();
                     if (modelHash != null && starModelsCap.containModel(modelHash)) {
-                        graphics.blit(ICON, this.getX() + startX, this.getY() + startY, 16, 16, 16, 0, 16, 16, 256,
-                            256);
+                        graphics.blit(RenderPipelines.GUI_TEXTURED, ICON, this.getX() + startX, this.getY() + startY,
+                            16, 0, 16, 16, 256, 256);
                     } else {
-                        graphics.blit(ICON, this.getX() + startX, this.getY() + startY, 16, 16, 0, 0, 16, 16, 256, 256);
+                        graphics.blit(RenderPipelines.GUI_TEXTURED, ICON, this.getX() + startX, this.getY() + startY,
+                            0, 0, 16, 16, 256, 256);
                     }
                 }));
         }
     }
 
     @Override
-    public void onPress() {
+    public void onPress(InputWithModifiers input) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
             player.getCapability(PlayerAnimatableCapabilityProvider.CAP).ifPresent(modelInfoCap -> player

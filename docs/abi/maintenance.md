@@ -32,6 +32,6 @@ Native 库只导出当前版本的标记变量。Java 用 JNA 打开指定绝对
 
 - 任一侧 qualifier 包含 `unstable`、`dev`、`snapshot` 子串时，两个完整原始版本字符串应严格相等。
 - 标记检测忽略大小写，原始字符串比较区分大小写。不删除后缀，不归一化，不放行 patch 差异。
-- 只有两侧均无开发标记时，才使用对应域的稳定版策略。无效版本直接拒绝。
+- 只有两侧均无开发标记时，才使用对应域的稳定版策略。Fabric 版以 Loader 的 `SemanticVersion` 解析版本和识别 qualifier。无法解析的版本直接拒绝。
 
 Native 符号门禁始终要求完整版本严格相等。缓存保留完整 ABI namespace，不扫描或迁移旧目录；移除 `-unstable` 不会自动获得缓存复用资格。相同 ABI 也不能替代内容指纹与环境验证。网络仍要求[同一模组版本的同一构建](../product-decisions/decisions/session-failure.md#bcunstable-protocol-requires-matched-builds)。

@@ -11,16 +11,15 @@ import com.elfmcys.ysm.geckolib3.core.processor.DebugInfo;
 import dev.semaweave.ProgramKey;
 import dev.semaweave.compilation.ProgramReplacement;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import com.elfmcys.ysm.platform.capability.CapOptional;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +35,8 @@ public class DebugAnimationScreen {
     private static final ReplacementNoticeTracker REPLACEMENT_NOTICES = new ReplacementNoticeTracker();
     private static volatile WeakReference<AnimatableEntity<?>> TARGET = null;
 
-    public static IGuiOverlay getGuiOverlay() {
-        return (ForgeGui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) -> {
-            renderCustom(gui, graphics, screenWidth, screenHeight);
-        };
+    public static HudElement getGuiOverlay() {
+        return (graphics, deltaTracker) -> renderCustom(graphics);
     }
 
     public static DebugInfo getDebugInfo() {
@@ -134,7 +131,7 @@ public class DebugAnimationScreen {
     }
 
     @SuppressWarnings("all")
-    private static void renderCustom(ForgeGui gui, GuiGraphics graphics, int screenWidth, int screenHeight) {
+    private static void renderCustom(GuiGraphicsExtractor graphics) {
         AnimatableEntity<?> target = getTarget();
         if (target == null) {
             // Detach stale state on the HUD thread, not from animation-worker queries.
@@ -146,10 +143,12 @@ public class DebugAnimationScreen {
         observeReplacementNotices(target);
 
         int[] y = {5};
+        var font = Minecraft.getInstance().font;
+        var screenWidth = graphics.guiWidth();
 
         DebugInfo debugInfo = DEBUG_INFO;
         debugInfo.enumerate((name, result) -> {
-            renderCustomText(gui, graphics, y, name, result, screenWidth, screenHeight);
+            renderCustomText(font, graphics, y, name, result, screenWidth);
         });
 
         // 渲染状态机信息
@@ -157,8 +156,8 @@ public class DebugAnimationScreen {
             return;
         DEBUG_CONTROLLERS.forEach(name -> {
             IAnimationController controller = target.getAnimationData().getAnimationController(name);
-            renderCustomText(gui, graphics, y, name, controller != null ? controller.getStateName() : "(N/A)",
-                screenWidth, screenHeight);
+            renderCustomText(font, graphics, y, name, controller != null ? controller.getStateName() : "(N/A)",
+                screenWidth);
         });
     }
 
@@ -238,16 +237,15 @@ public class DebugAnimationScreen {
         }
     }
 
-    private static void renderCustomText(ForgeGui gui, GuiGraphics graphics, int[] y, String name, String result,
-        int screenWidth, int screenHeight) {
-        Font font = gui.getFont();
+    private static void renderCustomText(Font font, GuiGraphicsExtractor graphics, int[] y, String name, String result,
+        int screenWidth) {
         if ((y[0] - 5) % 20 == 0) {
             graphics.fill(2, y[0] - 1, screenWidth, y[0] + 9, 0xc0505050);
         } else {
             graphics.fill(2, y[0] - 1, screenWidth, y[0] + 9, 0xc0506050);
         }
-        graphics.drawString(font, name, 5, y[0], 0xffffff);
-        graphics.drawString(font, result, screenWidth / 2, y[0], 0xffffff);
+        graphics.text(font, name, 5, y[0], 0xFFFFFFFF);
+        graphics.text(font, result, screenWidth / 2, y[0], 0xFFFFFFFF);
         y[0] = y[0] + 10;
     }
 }

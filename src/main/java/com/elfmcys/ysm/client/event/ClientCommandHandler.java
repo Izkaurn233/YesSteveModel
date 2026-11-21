@@ -3,20 +3,19 @@ package com.elfmcys.ysm.client.event;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.client.command.ClientRootCommand;
 import com.elfmcys.ysm.client.command.ResourceDebugCommand;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import com.mojang.brigadier.CommandDispatcher;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class ClientCommandHandler {
     private ClientCommandHandler() {}
 
-    @SubscribeEvent
-    public static void register(RegisterClientCommandsEvent event) {
-        ResourceDebugCommand.register(event.getDispatcher());
+    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
+        ResourceDebugCommand.register(dispatcher);
         if (YesSteveModel.isAvailable()) {
-            ClientRootCommand.register(event.getDispatcher());
+            ClientRootCommand.register(dispatcher);
         }
     }
 }

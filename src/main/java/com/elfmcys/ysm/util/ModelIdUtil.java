@@ -4,7 +4,9 @@ import com.elfmcys.ysm.YesSteveModel;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.resources.Identifier;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -65,11 +67,9 @@ public final class ModelIdUtil {
                 if (tagId == null) {
                     continue;
                 }
-                var tags = ForgeRegistries.ENTITY_TYPES.tags();
-                var tagKey = tags.createTagKey(tagId);
-                tags.getTag(tagKey).forEach(type -> {
-                    set.add(type.builtInRegistryHolder().key().location());
-                });
+                var tagKey = TagKey.create(Registries.ENTITY_TYPE, tagId);
+                BuiltInRegistries.ENTITY_TYPE.getTagOrEmpty(tagKey)
+                    .forEach(type -> set.add(BuiltInRegistries.ENTITY_TYPE.getKey(type.value())));
             } else {
                 var entityId = Identifier.tryParse(match);
                 if (entityId == null) {

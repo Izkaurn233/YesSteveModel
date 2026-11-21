@@ -21,7 +21,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -95,7 +97,7 @@ public class CustomFirstPersonArmEntity extends AnimatableEntity<LocalPlayer> {
             return null;
         if (part == FirstPersonPart.BACKGROUND) {
             firstPersonState.prepareBackground(
-                entity.tickCount + (partialTick != 1f ? partialTick : Minecraft.getInstance().getFrameTime()));
+                entity.tickCount + (partialTick != 1f ? partialTick : Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true)));
         } else if (!updateArm(partialTick))
             return null;
         if (!isPresentationAllowed() || getLoadedGeoModel() == null || !hasPart(part))
@@ -119,17 +121,17 @@ public class CustomFirstPersonArmEntity extends AnimatableEntity<LocalPlayer> {
             && firstPersonState.revision(prepared.part()) == prepared.revision() && hasPart(prepared.part());
     }
 
-    public boolean renderPart(PreparedPart prepared, Supplier<VertexConsumer> output, PoseStack.Pose pose, int light,
-        int overlay, int color) {
+    public boolean submitPart(PreparedPart prepared, Supplier<RenderType> output, PoseStack pose,
+        SubmitNodeCollector collector, CameraRenderState camera, int light, int overlay, int color) {
         return inDrawBorrow(() -> {
             if (!canConsume(prepared))
                 return false;
-            var consumer = output.get();
-            if (consumer == null || !canConsume(prepared))
+            var type = output.get();
+            if (type == null || !canConsume(prepared))
                 return false;
             var attributes =
                 prepared.part() == FirstPersonPart.BACKGROUND ? null : getLoadedGeoModel().getBoneAttributes();
-            return firstPersonState.render(prepared.part(), attributes, consumer, pose, light, overlay, color);
+            return firstPersonState.submit(prepared.part(), attributes, collector, type, pose, camera, light, overlay, color);
         });
     }
 

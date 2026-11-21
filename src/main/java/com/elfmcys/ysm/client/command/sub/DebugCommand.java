@@ -7,8 +7,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -22,10 +22,10 @@ public class DebugCommand {
     private static final SimpleCommandExceptionType ENTITY_NOT_FOUND =
         new SimpleCommandExceptionType(Component.translatable("argument.entity.notfound.entity"));
 
-    public static LiteralArgumentBuilder<CommandSourceStack> get() {
-        return Commands.literal(DEBUG_NAME)
+    public static LiteralArgumentBuilder<FabricClientCommandSource> get() {
+        return ClientCommands.literal(DEBUG_NAME)
             .executes(ctx -> enableDebugging("@s"))
-            .then(Commands.argument(TARGET_NAME, StringArgumentType.greedyString())
+            .then(ClientCommands.argument(TARGET_NAME, StringArgumentType.greedyString())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(targets(), builder))
                 .executes(ctx -> enableDebugging(StringArgumentType.getString(ctx, TARGET_NAME))));
     }
@@ -39,7 +39,7 @@ public class DebugCommand {
         // Server selectors cannot resolve against a client command source.
         for (var entity : minecraft.level.entitiesForRendering()) {
             if (target.equalsIgnoreCase(entity.getStringUUID())
-                || entity instanceof Player player && target.equalsIgnoreCase(player.getGameProfile().getName())) {
+                || entity instanceof Player player && target.equalsIgnoreCase(player.getGameProfile().name())) {
                 selected = entity;
                 break;
             }
@@ -62,7 +62,7 @@ public class DebugCommand {
             for (var entity : level.entitiesForRendering()) {
                 targets.add(Integer.toString(entity.getId()));
                 if (entity instanceof Player player)
-                    targets.add(player.getGameProfile().getName());
+                    targets.add(player.getGameProfile().name());
             }
         }
         return targets;

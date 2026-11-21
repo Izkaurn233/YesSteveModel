@@ -1,6 +1,5 @@
 package com.elfmcys.ysm.capability;
 
-import com.elfmcys.ysm.event.LivingShieldBlockEvent;
 import com.elfmcys.ysm.network.forge.PlayerStateHandler;
 import com.elfmcys.ysm.proto.network.AnimationStateProto;
 import com.elfmcys.ysm.proto.network.EffectStateProto;
@@ -37,6 +36,7 @@ public final class ServerDrivenPlayerPropertiesTracker {
     private float yya;
     private float zza;
     private boolean inShieldBlockCooldown;
+    private Integer shieldBlockTick;
     private String extraAnimation = "";
 
     public ServerDrivenPlayerPropertiesTracker() {
@@ -95,7 +95,7 @@ public final class ServerDrivenPlayerPropertiesTracker {
             if (sync)
                 pendingGameplay = pendingGameplay.withMoveZQ7(quantizeAxis(zza));
         }
-        var cooldown = LivingShieldBlockEvent.inShieldBlockCooldown(player);
+        var cooldown = inShieldBlockCooldown(player);
         if (inShieldBlockCooldown != cooldown) {
             inShieldBlockCooldown = cooldown;
             if (sync)
@@ -109,6 +109,17 @@ public final class ServerDrivenPlayerPropertiesTracker {
     public void addEffect(ServerPlayer player, MobEffect effect, int level) {
         pendingEffects.put(effect, level);
         broadcastPending(player);
+    }
+
+    public void recordShieldBlock(ServerPlayer player) {
+        shieldBlockTick = player.tickCount;
+    }
+
+    private boolean inShieldBlockCooldown(ServerPlayer player) {
+        if (shieldBlockTick != null && Integer.compareUnsigned(player.tickCount - shieldBlockTick, 5) > 0) {
+            shieldBlockTick = null;
+        }
+        return shieldBlockTick != null;
     }
 
     public void removeEffect(ServerPlayer player, MobEffect effect) {
@@ -158,7 +169,7 @@ public final class ServerDrivenPlayerPropertiesTracker {
             .setHealth((int)player.getHealth()).setMaxHealth((int)player.getMaxHealth())
             .setMoveXQ7(quantizeAxis(player.xxa)).setMoveYQ7(quantizeAxis(player.yya))
             .setMoveZQ7(quantizeAxis(player.zza))
-            .setShieldCooldown(LivingShieldBlockEvent.inShieldBlockCooldown(player)).build();
+            .setShieldCooldown(inShieldBlockCooldown(player)).build();
         update.setGameplay(gameplay);
 
         var effects = EffectStateSetProto.newBuilder();

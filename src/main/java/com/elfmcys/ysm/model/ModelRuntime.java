@@ -4,11 +4,10 @@ import com.elfmcys.ysm.AssetDirectoryPlatform;
 import com.elfmcys.ysm.AssetPaths;
 import com.elfmcys.ysm.ProcessAssetPaths;
 import com.elfmcys.ysm.YesSteveModel;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLPaths;
+import com.elfmcys.ysm.platform.Platform;
 
 /**
- * Lifecycle bridge between Forge common setup and the process model-system owner.
+ * Lifecycle bridge between Fabric common setup and the process model-system owner.
  *
  * <p>Execution: startup and process shutdown must not overlap. Synchronization protects publication,
  * not the lifetime of a system returned to a caller.
@@ -25,7 +24,7 @@ public final class ModelRuntime {
     /**
      * Publishes a complete system once; repeated calls keep the published instance.
      *
-     * <p>Requires: Forge paths and the active mod container are available. Ordinary catalog activation
+     * <p>Requires: Fabric paths and the active mod container are available. Ordinary catalog activation
      * and required client preparation have separate owners.
      *
      * <p>Failure: construction failure propagates without publishing a partial system.
@@ -70,8 +69,8 @@ public final class ModelRuntime {
 
     private static AssetPaths discoverDirectories() {
         var environment = java.util.Map.copyOf(System.getenv());
-        var builtin = ModList.get().getModFileById(YesSteveModel.MOD_ID).getFile()
-            .findResource("assets", YesSteveModel.MOD_ID, "builtin");
+        var builtin = Platform.ysm().findPath("assets/" + YesSteveModel.MOD_ID + "/builtin")
+            .orElseThrow(() -> new IllegalStateException("The YSM builtin model directory is missing"));
         AssetDirectoryPlatform.MacDirectories mac = null;
         var platform = environment.containsKey("YSM_HOME") ? AssetDirectoryPlatform.Kind.UNSUPPORTED
             : AssetDirectoryPlatform.current();
@@ -82,7 +81,7 @@ public final class ModelRuntime {
                 YesSteveModel.LOGGER.error("Global model directory query failed", error);
             }
         }
-        var paths = AssetPaths.discover(FMLPaths.GAMEDIR.get(), FMLPaths.CONFIGDIR.get(), builtin,
+        var paths = AssetPaths.discover(Platform.gameDir(), Platform.configDir(), builtin,
             environment, platform, mac);
         for (var diagnostic : paths.diagnostics()) {
             YesSteveModel.LOGGER.error("Global model directory {} failed at {}: {}", diagnostic.operation(),

@@ -11,7 +11,7 @@ import java.io.IOException;
 public class BakedModelWriter extends AssetFileWriter {
     public BakedModelWriter() {
         setSchemaId(BakedModelConstant.SCHEMA_ID);
-        setProperty(BakedModelConstant.PROP_VERSION, BakedModelConstant.CURRENT_VERSION.toString());
+        setProperty(BakedModelConstant.PROP_VERSION, BakedModelConstant.CURRENT_VERSION);
     }
 
     public void setData(byte[] bakeHash, GeoModelProto sourceModel, UniBuffer bakedData) throws IOException {

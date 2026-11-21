@@ -74,7 +74,8 @@ public class MainhandPredicate implements IAnimationPredicate<CustomHumanoidEnti
     }
 
     private boolean checkSwingAndUse(LivingEntity entity, InteractionHand hand) {
-        if (entity.swinging && entity.swingingArm == hand) {
+        var swing = entity.getCurrentSwing();
+        if (swing != null && swing.hand() == hand) {
             return false;
         }
         return !entity.isUsingItem() || entity.getUsedItemHand() != hand;

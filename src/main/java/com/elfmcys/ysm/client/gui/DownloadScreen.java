@@ -2,8 +2,9 @@ package com.elfmcys.ysm.client.gui;
 
 import com.elfmcys.ysm.client.gui.button.FlatColorButton;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 
 public class DownloadScreen extends ModelScreen {
     private final PlayerModelScreen parent;
@@ -25,10 +26,9 @@ public class DownloadScreen extends ModelScreen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
-        renderBackground(graphics);
-        graphics.drawCenteredString(font, "Coming Soooooooooooooooooooooooooon™", width / 2, height / 2 - 5,
-            ChatFormatting.DARK_RED.getColor());
-        super.render(graphics, pMouseX, pMouseY, pPartialTick);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int pMouseX, int pMouseY, float pPartialTick) {
+        graphics.centeredText(font, Component.literal("Coming Soooooooooooooooooooooooooon™"), width / 2, height / 2 - 5,
+            (0xFF000000 | TextColor.fromLegacyFormat(ChatFormatting.DARK_RED).getValue()));
+        super.extractRenderState(graphics, pMouseX, pMouseY, pPartialTick);
     }
 }

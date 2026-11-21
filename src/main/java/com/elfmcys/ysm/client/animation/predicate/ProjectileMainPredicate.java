@@ -23,7 +23,7 @@ public class ProjectileMainPredicate implements IAnimationPredicate<CustomProjec
         if (projectile.isOnFire()) {
             return playAnimation(event, "fire");
         }
-        if (projectile instanceof IArrowExtraInfo info && info.isInGround()) {
+        if (projectile instanceof IArrowExtraInfo info && info.ysm$isInGround()) {
             return playAnimation(event, "ground");
         } else {
             return playAnimation(event, "air");

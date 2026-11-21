@@ -10,6 +10,8 @@ import com.elfmcys.ysm.client.entity.IPreviewEntity;
 import com.elfmcys.ysm.geckolib3.core.PlayState;
 import com.elfmcys.ysm.geckolib3.core.builder.LoopType;
 import com.elfmcys.ysm.geckolib3.core.event.predicate.AnimationEvent;
+import com.elfmcys.ysm.mixin.client.LivingEntityAccessor;
+import com.elfmcys.ysm.mixin.client.SwingStateAccessor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import org.apache.commons.lang3.StringUtils;
@@ -48,22 +50,24 @@ public class SwingPredicate implements IAnimationPredicate<CustomHumanoidEntity<
         }
 
         // 其他情况
-        if (entity.swinging && !entity.isSleeping()) {
-            if (entity.swingTime == 0
+        var swing = entity.getCurrentSwing();
+        if (swing != null && !entity.isSleeping()) {
+            var swingState = ((LivingEntityAccessor) entity).ysm$getSwingState();
+            if (((SwingStateAccessor) swingState).ysm$getSwingTicks() <= 1
                 && event.getAnimatableEntity().getStateTracker().setEntityTickState(EntityTickStates.SWING)) {
                 // swing 开始时重置动画
                 event.getCodedController().indicateReload();
             }
             ConditionManager conditionManager = event.getAnimatableEntity().getConditionManager();
-            ConditionalSwing conditionalSwing = entity.swingingArm == InteractionHand.MAIN_HAND
+            ConditionalSwing conditionalSwing = swing.hand() == InteractionHand.MAIN_HAND
                 ? conditionManager.getSwingMainhand() : conditionManager.getSwingOffhand();
             if (conditionalSwing != null) {
-                String name = conditionalSwing.doTest(entity, entity.swingingArm);
+                String name = conditionalSwing.doTest(entity, swing.hand());
                 if (StringUtils.isNoneBlank(name)) {
                     return playCompatAnimation(event, name, LoopType.PLAY_ONCE);
                 }
             }
-            String defaultSwing = (entity.swingingArm == InteractionHand.MAIN_HAND) ? "swing_hand" : "swing_offhand";
+            String defaultSwing = (swing.hand() == InteractionHand.MAIN_HAND) ? "swing_hand" : "swing_offhand";
             return playCompatAnimation(event, defaultSwing, LoopType.PLAY_ONCE);
         }
         return PlayState.CONTINUE;

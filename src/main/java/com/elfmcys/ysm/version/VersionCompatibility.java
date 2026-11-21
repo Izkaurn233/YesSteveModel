@@ -1,6 +1,7 @@
 package com.elfmcys.ysm.version;
 
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.VersionParsingException;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -17,6 +18,13 @@ public final class VersionCompatibility {
     public static boolean isCompatible(String currentText, String candidateText,
         BiPredicate<String, String> releasePolicy) {
         Objects.requireNonNull(releasePolicy, "releasePolicy");
+        return isCompatibleRelease(currentText, candidateText, (current, candidate) ->
+            releasePolicy.test(currentText, candidateText));
+    }
+
+    public static boolean isCompatibleRelease(String currentText, String candidateText,
+        BiPredicate<SemanticVersion, SemanticVersion> releasePolicy) {
+        Objects.requireNonNull(releasePolicy, "releasePolicy");
         var current = parse(currentText);
         var candidate = parse(candidateText);
         if (current == null || candidate == null) {
@@ -25,22 +33,22 @@ public final class VersionCompatibility {
         if (isDevelopment(current) || isDevelopment(candidate)) {
             return currentText.equals(candidateText);
         }
-        return releasePolicy.test(currentText, candidateText);
+        return releasePolicy.test(current, candidate);
     }
 
-    private static DefaultArtifactVersion parse(String text) {
+    private static SemanticVersion parse(String text) {
         if (text == null || !VERSION_TEXT.matcher(text).matches()) {
             return null;
         }
         try {
-            return new DefaultArtifactVersion(text);
-        } catch (RuntimeException invalid) {
+            return SemanticVersion.parse(text);
+        } catch (VersionParsingException invalid) {
             return null;
         }
     }
 
-    private static boolean isDevelopment(DefaultArtifactVersion version) {
-        var qualifier = version.getQualifier();
+    private static boolean isDevelopment(SemanticVersion version) {
+        var qualifier = version.getPrereleaseKey().orElse(null);
         if (qualifier == null) {
             return false;
         }

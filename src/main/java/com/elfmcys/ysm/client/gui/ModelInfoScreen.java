@@ -20,9 +20,10 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import net.minecraft.Util;
+import com.mojang.blaze3d.Blaze3D;
+import java.net.URI;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -152,16 +153,23 @@ public class ModelInfoScreen extends ModelScreen {
     }
 
     private void openUrl(@Nullable String homeUrl) {
-        if (homeUrl != null && StringUtils.isNoneBlank(homeUrl)) {
-            showScreen(new ConfirmLinkScreen(yes -> {
-                if (!hasCurrentWorld())
-                    return;
-                if (yes) {
-                    Util.getPlatform().openUri(homeUrl);
-                }
-                showScreen(this);
-            }, homeUrl, true));
+        if (homeUrl == null || StringUtils.isBlank(homeUrl)) {
+            return;
         }
+        URI uri;
+        try {
+            uri = URI.create(homeUrl);
+        } catch (IllegalArgumentException ignored) {
+            return;
+        }
+        showScreen(new ConfirmLinkScreen(yes -> {
+            if (!hasCurrentWorld())
+                return;
+            if (yes) {
+                Blaze3D.openUri(uri);
+            }
+            showScreen(this);
+        }, uri, true));
     }
 
     private void closePage() {
@@ -174,8 +182,7 @@ public class ModelInfoScreen extends ModelScreen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 
         graphics.fillGradient(this.x + 25, this.y + 150, this.x + 305, this.y + 220, 0x8F_5B5B5B, 0x8F_5B5B5B);
 
@@ -185,16 +192,16 @@ public class ModelInfoScreen extends ModelScreen {
             List<FormattedCharSequence> splitDesc = font.split(Component.literal(tips), 270);
             int offset = 0;
             for (FormattedCharSequence desc : splitDesc) {
-                graphics.drawString(font, desc, this.x + 30, this.y + 154 + offset, 0xFFFFFFFF);
+                graphics.text(font, desc, this.x + 30, this.y + 154 + offset, 0xFFFFFFFF);
                 offset += font.lineHeight;
                 if (offset > font.lineHeight * 7) {
                     break;
                 }
             }
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
-        this.renderables.stream().filter(r -> r instanceof AuthorButton)
+        this.children().stream().filter(r -> r instanceof AuthorButton)
             .forEach(r -> ((AuthorButton)r).renderToolTip(graphics, this, mouseX, mouseY));
     }
 

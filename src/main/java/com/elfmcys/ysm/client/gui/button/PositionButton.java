@@ -3,24 +3,25 @@ package com.elfmcys.ysm.client.gui.button;
 import com.elfmcys.ysm.config.LoadingStateScreenConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
-public class PositionButton extends Button {
+public class PositionButton extends Button.Plain {
     public PositionButton(int x, int y) {
         super(x, y, 100, 20, Component.empty(), b -> {
         }, DEFAULT_NARRATION);
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractContents(guiGraphics, mouseX, mouseY, partialTick);
 
         Font font = Minecraft.getInstance().font;
         MutableComponent desc = Component.translatable("gui.yes_steve_model.config.loading_state_position");
-        guiGraphics.drawString(font, desc, this.getX() + 105, this.getY() + 6, 0xFFFFFF, false);
+        guiGraphics.text(font, desc, this.getX() + 105, this.getY() + 6, 0xFFFFFFFF, false);
     }
 
     @Override
@@ -30,7 +31,7 @@ public class PositionButton extends Button {
     }
 
     @Override
-    public void onPress() {
+    public void onPress(InputWithModifiers input) {
         LoadingStateScreenConfig.Position position = LoadingStateScreenConfig.LOADING_STATE_POSITION.get();
         LoadingStateScreenConfig.Position nextPosition = switch (position) {
             case TOP_LEFT -> LoadingStateScreenConfig.Position.TOP_CENTER;

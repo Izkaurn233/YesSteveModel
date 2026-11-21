@@ -21,8 +21,8 @@ public class AnimationUtils {
     /**
      * 获取实体的 Renderer
      */
-    public static <T extends Entity> EntityRenderer<T> getRenderer(T entity) {
+    public static <T extends Entity> EntityRenderer<? super T, ?> getRenderer(T entity) {
         EntityRenderDispatcher renderManager = Minecraft.getInstance().getEntityRenderDispatcher();
-        return (EntityRenderer<T>)renderManager.getRenderer(entity);
+        return renderManager.getRenderer(entity);
     }
 }

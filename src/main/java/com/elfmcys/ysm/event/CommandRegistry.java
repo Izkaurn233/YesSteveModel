@@ -6,6 +6,7 @@ import com.elfmcys.ysm.model.service.ClientModelService;
 import com.elfmcys.ysm.command.RootCommand;
 import com.elfmcys.ysm.model.service.ServerModelService;
 import com.google.common.collect.Sets;
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -13,15 +14,11 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.resources.Identifier;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber
 @SuppressWarnings("removal")
 public final class CommandRegistry {
     public static final SuggestionProvider<CommandSourceStack> ALL_MODELS =
@@ -71,14 +68,13 @@ public final class CommandRegistry {
             return Suggestions.empty();
         });
 
-    @SubscribeEvent
-    public static void onServerStaring(RegisterCommandsEvent event) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!YesSteveModel.isAvailable()) {
-            RootCommand.registerPlaceholder(event.getDispatcher());
+            RootCommand.registerPlaceholder(dispatcher);
             return;
         }
 
-        RootCommand.register(event.getDispatcher());
+        RootCommand.register(dispatcher);
     }
 
     private static String filterSuggestionStr(String str) {

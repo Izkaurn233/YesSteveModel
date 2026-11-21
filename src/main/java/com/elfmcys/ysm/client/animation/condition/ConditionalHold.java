@@ -4,15 +4,15 @@ import com.elfmcys.ysm.util.EnumUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.tags.ITagManager;
+import net.minecraft.world.item.ItemUseAnimation;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
@@ -27,7 +27,7 @@ public class ConditionalHold {
     private final String extraPre;
     private final ObjectOpenHashSet<Identifier> idTest = new ObjectOpenHashSet<>();
     private final ReferenceArrayList<TagKey<Item>> tagTest = new ReferenceArrayList<>();
-    private final ReferenceOpenHashSet<UseAnim> extraTest = new ReferenceOpenHashSet<>();
+    private final ReferenceOpenHashSet<ItemUseAnimation> extraTest = new ReferenceOpenHashSet<>();
     private final ObjectOpenHashSet<String> innerTest = new ObjectOpenHashSet<>();
 
     public ConditionalHold(InteractionHand hand) {
@@ -53,15 +53,11 @@ public class ConditionalHold {
             idTest.add(Identifier.parse(substring));
         }
         if (name.startsWith(tagPre) && (Identifier.tryParse(substring) != null)) {
-            ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-            if (tags == null) {
-                return;
-            }
-            TagKey<Item> tagKey = tags.createTagKey(Identifier.parse(substring));
+            TagKey<Item> tagKey = TagKey.create(Registries.ITEM, Identifier.parse(substring));
             tagTest.add(tagKey);
         }
         if (name.startsWith(extraPre)) {
-            if (substring.equals(UseAnim.NONE.name().toLowerCase(Locale.US))) {
+            if (substring.equals(ItemUseAnimation.NONE.name().toLowerCase(Locale.US))) {
                 return;
             }
             EnumUtil.getUseAnim(substring).ifPresent(extraTest::add);
@@ -89,7 +85,7 @@ public class ConditionalHold {
             return EMPTY;
         }
         ItemStack itemInHand = livingEntity.getItemInHand(hand);
-        Identifier registryName = ForgeRegistries.ITEMS.getKey(itemInHand.getItem());
+        Identifier registryName = BuiltInRegistries.ITEM.getKey(itemInHand.getItem());
         if (registryName == null) {
             return EMPTY;
         }
@@ -104,10 +100,6 @@ public class ConditionalHold {
             return EMPTY;
         }
         ItemStack itemInHand = livingEntity.getItemInHand(hand);
-        ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-        if (tags == null) {
-            return EMPTY;
-        }
         return tagTest.stream().filter(itemInHand::is).findFirst().map(itemTagKey -> tagPre + itemTagKey.location())
             .orElse(EMPTY);
     }
@@ -120,7 +112,7 @@ public class ConditionalHold {
         if (StringUtils.isNotBlank(innerName) && this.innerTest.contains(innerName)) {
             return innerName;
         }
-        UseAnim anim = livingEntity.getItemInHand(hand).getUseAnimation();
+        ItemUseAnimation anim = livingEntity.getItemInHand(hand).getUseAnimation();
         if (this.extraTest.contains(anim)) {
             return extraPre + anim.name().toLowerCase(Locale.US);
         }

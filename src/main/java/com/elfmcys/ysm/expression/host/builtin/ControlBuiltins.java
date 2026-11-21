@@ -12,7 +12,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +124,7 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
         if (slot == null)
             return null;
         var item = EquipmentUtil.getEquippedItem(living, slot);
-        var actual = ForgeRegistries.ITEMS.getKey(item.getItem());
+        var actual = BuiltInRegistries.ITEM.getKey(item.getItem());
         if (item.isEmpty() || actual == null)
             return false;
         for (String name : names) {
@@ -146,14 +148,11 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
         var pos = new BlockPos((int)Math.round(entity.getX() + offsetX - 0.5d),
             (int)Math.round(entity.getY() + offsetY - 0.5d), (int)Math.round(entity.getZ() + offsetZ - 0.5d));
         var block = entity.level().getBlockState(pos);
-        var tags = ForgeRegistries.BLOCKS.tags();
-        if (tags == null)
-            return null;
         for (String name : names) {
             var id = Identifier.tryParse(name);
             if (id == null)
                 return null;
-            if (block.is(tags.createTagKey(id)))
+            if (block.is(TagKey.create(Registries.BLOCK, id)))
                 return true;
         }
         return false;
@@ -172,7 +171,7 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
         if (StringUtils.isBlank(input)) {
             return false;
         }
-        if (operation == ItemCheck.SWING && (!living.swinging || living.isSleeping())
+        if (operation == ItemCheck.SWING && (!living.isSwinging() || living.isSleeping())
             || operation == ItemCheck.USE && (!living.isUsingItem() || living.isSleeping())) {
             return false;
         }
@@ -185,13 +184,12 @@ public final class ControlBuiltins implements EntityComponent<Entity> {
         }
         var value = input.substring(1);
         if (input.startsWith("$")) {
-            var id = ForgeRegistries.ITEMS.getKey(item.getItem());
+            var id = BuiltInRegistries.ITEM.getKey(item.getItem());
             return id != null && value.equals(id.toString());
         }
         if (input.startsWith("#")) {
             var id = Identifier.tryParse(value);
-            var tags = ForgeRegistries.ITEMS.tags();
-            return id != null && tags != null && item.is(tags.createTagKey(id));
+            return id != null && item.is(TagKey.create(Registries.ITEM, id));
         }
         if (operation != ItemCheck.ARMOR && input.startsWith(":")) {
             var classify = InnerClassify.getClassify(item);

@@ -3,21 +3,26 @@ package com.elfmcys.ysm.fabric;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.capability.CapabilityBootstrap;
 import com.elfmcys.ysm.event.CapabilityEvent;
+import com.elfmcys.ysm.event.CommandRegistry;
 import com.elfmcys.ysm.event.CommonEvent;
+import com.elfmcys.ysm.event.LoggedOutEvent;
+import com.elfmcys.ysm.event.LoginEvent;
+import com.elfmcys.ysm.event.ServerStartingEvent;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
  * Fabric main entrypoint, replacing the Forge {@code @Mod} constructor.
- * <p>
  * PORT(26.3-fabric): common (both-side) handlers that Forge found through {@code @Mod.EventBusSubscriber} are
- * registered here as each group is ported. Remaining groups are tracked in PROJECT_MEMORY.md.
  */
 public final class YesSteveModelFabric implements ModInitializer {
     @Override
@@ -30,6 +35,11 @@ public final class YesSteveModelFabric implements ModInitializer {
         }
         CommonEvent.onSetup();
         registerCapabilityEvents();
+        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> CommandRegistry.register(dispatcher));
+        ServerLifecycleEvents.SERVER_STARTING.register(ServerStartingEvent::onServerInit);
+        ServerLifecycleEvents.SERVER_STOPPING.register(ServerStartingEvent::onServerStopping);
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> LoginEvent.onLoggedInServer(handler.player));
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> LoggedOutEvent.onPlayerLoggedOut(handler.player));
     }
 
     private static void registerCapabilityEvents() {

@@ -3,18 +3,14 @@ package com.elfmcys.ysm.client.event;
 import com.elfmcys.ysm.YesSteveModel;
 import com.elfmcys.ysm.network.forge.ClientSessionRuntime;
 import net.minecraft.network.Connection;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class ClientLoggedEvent {
     private static Connection loggedIn;
 
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
-        var connection = event.getConnection();
+    public static void onPlayerLoggedIn(Connection connection) {
         if (loggedIn == connection) {
             return;
         }
@@ -27,9 +23,7 @@ public class ClientLoggedEvent {
         loggedIn = connection;
     }
 
-    @SubscribeEvent
-    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
-        var connection = event.getConnection();
+    public static void onPlayerLoggedOut(Connection connection) {
         if (loggedIn != connection) {
             return;
         }

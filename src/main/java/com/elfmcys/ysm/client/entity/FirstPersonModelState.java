@@ -8,7 +8,9 @@ import com.elfmcys.ysm.natives.render.NativeModelState;
 import com.elfmcys.ysm.natives.render.NativeRenderer;
 import com.elfmcys.ysm.natives.render.RenderContextType;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 
 /** Derived data belongs to the accepted resource, never to its logical name or wrapper. */
 final class FirstPersonModelState {
@@ -86,8 +88,8 @@ final class FirstPersonModelState {
         }
     }
 
-    boolean render(FirstPersonPart part, float[] animatedAttributes, VertexConsumer consumer, PoseStack.Pose pose,
-        int light, int overlay, int color) {
+    boolean submit(FirstPersonPart part, float[] animatedAttributes, SubmitNodeCollector collector, RenderType type,
+        PoseStack pose, CameraRenderState camera, int light, int overlay, int color) {
         if (!hasPart(part)) {
             return false;
         }
@@ -104,7 +106,7 @@ final class FirstPersonModelState {
             }
             prepared[index] = true;
         }
-        return NativeRenderer.render(consumer, pose, output, output.getTotalVertexCount(), light, overlay, color,
+        return NativeRenderer.submit(collector, type, pose, camera, output, output.getTotalVertexCount(), light, overlay, color,
             RenderContextType.LEVEL);
     }
 

@@ -32,7 +32,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 /** Metadata view for a baked render target. Animation payloads remain unopened. */
@@ -51,8 +50,8 @@ public final class BakedAssetView {
         }
         var version = Objects.requireNonNull(assetView.getSchemaProperty(BakedAssetConstant.PROP_VERSION),
             "Version property not found");
-        if (!VersionCompatibility.isCompatible(BakedAssetConstant.CURRENT_VERSION.toString(), version, (current,
-            candidate) -> new DefaultArtifactVersion(current).equals(new DefaultArtifactVersion(candidate)))) {
+        if (!VersionCompatibility.isCompatibleRelease(BakedAssetConstant.CURRENT_VERSION, version,
+            (current, candidate) -> current.equals(candidate))) {
             throw new UnsupportedEncodingException("Unsupported baked asset version: \"" + version + "\"");
         }
         var manifestChunk = assetView.getChunkInfo(BakedAssetConstant.MANIFEST_CHUNK_NAME);

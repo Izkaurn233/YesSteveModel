@@ -211,8 +211,12 @@ public final class ClientSessionRuntime {
         var owner = current;
         if (owner == null || owner.closed)
             return;
+        if (!owner.connection.isConnected()) {
+            closeCurrent();
+            return;
+        }
         if (owner.assetTransfer != null) {
-            var megabits = com.elfmcys.ysm.config.ServerConfig.BANDWIDTH_LIMIT.get();
+            var megabits = com.elfmcys.ysm.config.ServerConfig.readClient(com.elfmcys.ysm.config.ServerConfig.BANDWIDTH_LIMIT);
             owner.assetTransfer.tickUpload(System.nanoTime(), megabits == 0 ? 0 : megabits * 1_000_000L / 8);
         }
         if (owner.previewRepair != null) {

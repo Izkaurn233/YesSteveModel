@@ -6,7 +6,6 @@ import com.elfmcys.ysm.model.resource.client.ModelResourceFailureGate;
 import com.elfmcys.ysm.natives.image.ImageSource;
 import com.elfmcys.ysm.util.ResourceDiagnostics;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.platform.TextureUtil;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,7 +18,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 
 /** Target-bound texture objects whose loads complete synchronously on the render owner. */
-public final class CustomPBRTextureSet extends AbstractTexture implements PBRTextureSet {
+public final class CustomPBRTextureSet extends YsmTexture implements PBRTextureSet {
     private final ImageSource source;
     private final ModelResourceFailureGate failureGate;
     private final TextureIO textureIO;
@@ -150,10 +149,7 @@ public final class CustomPBRTextureSet extends AbstractTexture implements PBRTex
 
     @FunctionalInterface
     interface TextureIO {
-        TextureIO PRODUCTION = (texture, pixels) -> {
-            TextureUtil.prepareImage(texture.getId(), 0, pixels.getWidth(), pixels.getHeight());
-            pixels.upload(0, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), false, false, false, false);
-        };
+        TextureIO PRODUCTION = (texture, pixels) -> ((YsmTexture) texture).uploadPixels(pixels);
 
         void upload(AbstractTexture texture, NativeImage pixels);
 
@@ -162,7 +158,7 @@ public final class CustomPBRTextureSet extends AbstractTexture implements PBRTex
         }
     }
 
-    private static final class ComponentTexture extends AbstractTexture {
+    private static final class ComponentTexture extends YsmTexture {
         private final ImageSource source;
         private final ModelResourceFailureGate failureGate;
         private final TextureIO textureIO;

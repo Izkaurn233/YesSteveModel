@@ -1,6 +1,6 @@
 package com.elfmcys.ysm.natives.legacy;
 
-import io.netty.util.internal.PlatformDependent;
+import java.lang.foreign.MemorySegment;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -144,7 +144,7 @@ final class NativeLegacyProtocol {
             if (left.capacity() == 0) {
                 continue;
             }
-            long leftStart = PlatformDependent.directBufferAddress(left) + left.position();
+            long leftStart = MemorySegment.ofBuffer(left).address();
             long leftEnd = leftStart + Integer.toUnsignedLong(left.capacity());
             if (Long.compareUnsigned(leftEnd, leftStart) < 0) {
                 throw new ProtocolException("Legacy payload address overflow");
@@ -154,7 +154,7 @@ final class NativeLegacyProtocol {
                 if (right.capacity() == 0) {
                     continue;
                 }
-                long rightStart = PlatformDependent.directBufferAddress(right) + right.position();
+                long rightStart = MemorySegment.ofBuffer(right).address();
                 long rightEnd = rightStart + Integer.toUnsignedLong(right.capacity());
                 if (Long.compareUnsigned(rightEnd, rightStart) < 0
                     || Long.compareUnsigned(leftStart, rightEnd) < 0 && Long.compareUnsigned(rightStart, leftEnd) < 0) {

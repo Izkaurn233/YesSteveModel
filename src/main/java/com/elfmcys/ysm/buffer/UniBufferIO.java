@@ -1,8 +1,7 @@
 package com.elfmcys.ysm.buffer;
 
-import io.netty.util.internal.PlatformDependent;
-
 import java.lang.ref.Reference;
+import java.nio.ByteBuffer;
 
 public final class UniBufferIO {
     private UniBufferIO() {}
@@ -14,23 +13,11 @@ public final class UniBufferIO {
             if (length == 0) {
                 return;
             }
-            if (source instanceof ArrayBuffer sourceArray) {
-                var sourceIndex = sourceArray.arrayOffset() + sourceOffset;
-                if (target instanceof ArrayBuffer targetArray) {
-                    System.arraycopy(sourceArray.array(), sourceIndex, targetArray.array(),
-                        targetArray.arrayOffset() + targetOffset, length);
-                } else {
-                    PlatformDependent.copyMemory(sourceArray.array(), sourceIndex,
-                        ((NativeBuffer)target).ptr() + targetOffset, length);
-                }
-                return;
-            }
-            var sourceAddress = ((NativeBuffer)source).ptr() + sourceOffset;
-            if (target instanceof ArrayBuffer targetArray) {
-                PlatformDependent.copyMemory(sourceAddress, targetArray.array(),
-                    targetArray.arrayOffset() + targetOffset, length);
+            if (source instanceof ArrayBuffer sourceArray && target instanceof ArrayBuffer targetArray) {
+                System.arraycopy(sourceArray.array(), sourceArray.arrayOffset() + sourceOffset,
+                    targetArray.array(), targetArray.arrayOffset() + targetOffset, length);
             } else {
-                PlatformDependent.copyMemory(sourceAddress, ((NativeBuffer)target).ptr() + targetOffset, length);
+                target.nio().put(targetOffset, source.nio(), sourceOffset, length);
             }
         } finally {
             Reference.reachabilityFence(source);
@@ -42,22 +29,8 @@ public final class UniBufferIO {
         try {
             checkRange(source.size(), sourceOffset, length);
             checkRange(target.length, targetOffset, length);
-            if (source instanceof ArrayBuffer array) {
-                var sourceIndex = array.arrayOffset() + sourceOffset;
-                for (var index = 0; index < length; index++) {
-                    if (array.array()[sourceIndex + index] != target[targetOffset + index]) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            var address = ((NativeBuffer)source).ptr() + sourceOffset;
-            for (var index = 0; index < length; index++) {
-                if (PlatformDependent.getByte(address + index) != target[targetOffset + index]) {
-                    return false;
-                }
-            }
-            return true;
+            return source.nio().slice(sourceOffset, length)
+                .mismatch(ByteBuffer.wrap(target, targetOffset, length)) == -1;
         } finally {
             Reference.reachabilityFence(source);
             Reference.reachabilityFence(target);
@@ -68,23 +41,11 @@ public final class UniBufferIO {
         try {
             checkRange(left.size(), leftOffset, length);
             checkRange(right.size(), rightOffset, length);
-            for (var index = 0; index < length; index++) {
-                if (get(left, leftOffset + index) != get(right, rightOffset + index)) {
-                    return false;
-                }
-            }
-            return true;
+            return left.nio().slice(leftOffset, length).mismatch(right.nio().slice(rightOffset, length)) == -1;
         } finally {
             Reference.reachabilityFence(left);
             Reference.reachabilityFence(right);
         }
-    }
-
-    private static byte get(UniBuffer buffer, int index) {
-        if (buffer instanceof ArrayBuffer array) {
-            return array.array()[array.arrayOffset() + index];
-        }
-        return PlatformDependent.getByte(((NativeBuffer)buffer).ptr() + index);
     }
 
     private static void checkRange(int size, int offset, int length) {
