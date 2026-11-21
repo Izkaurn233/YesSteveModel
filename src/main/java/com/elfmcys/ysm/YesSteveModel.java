@@ -8,11 +8,13 @@ import com.elfmcys.ysm.config.ServerConfig;
 import com.elfmcys.ysm.init.ModSounds;
 import com.elfmcys.ysm.platform.Platform;
 import com.elfmcys.ysm.util.NativeLibUtil;
+import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.neoforged.fml.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,11 +56,10 @@ public final class YesSteveModel {
     }
 
     private static void initConfig() {
-        // TODO(26.3-fabric): config registration is not ported. Forge registered these specs through
-        // ModLoadingContext.registerConfig(CLIENT/SERVER). The Fabric replacement (Forge Config API Port or a native
-        // config layer) is still open; see PROJECT_MEMORY.md. Until then the specs are built but not bound to a file.
-        ClientConfig.init();
-        ServerConfig.init();
+        // PORT(26.3-fabric): Forge Config API Port replaces ModLoadingContext.registerConfig. Same spec classes.
+        // TODO: not verified: config file names and SERVER-config sync behaviour versus Forge 1.20.1.
+        ConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
+        ConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
         if (Platform.isClient()) {
             ModSounds.register();
         }
